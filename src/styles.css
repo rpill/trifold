@@ -1,0 +1,46 @@
+:root {
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-right: env(safe-area-inset-right, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-left: env(safe-area-inset-left, 0px);
+}
+
+html,
+body,
+#game {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+body {
+  background: #183f2f;
+  touch-action: none;
+  user-select: none;
+}
+
+#game {
+  position: relative;
+}
+
+#game canvas {
+  display: block;
+  image-rendering: auto;
+}
+
+.portrait-guard {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: none;
+  place-items: center;
+  background: #183f2f;
+  color: #fff;
+  font: 600 20px/1.2 system-ui, sans-serif;
+}
+
+@media (orientation: portrait) and (max-width: 900px) {
+  .portrait-guard { display: grid; }
+  #game canvas { visibility: hidden; }
+}
