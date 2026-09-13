@@ -20,7 +20,13 @@ import type {
   TransactionResult,
 } from '../model/types.ts';
 import type { SfxCue } from '../../settings/SfxController.ts';
-import { DEAL_STAGGER_MS, getCardMotionDuration, getDealFlightOriginY } from './CardAnimation.ts';
+import {
+  DEAL_STAGGER_MS,
+  getCardMotionDuration,
+  getDealFlightOriginY,
+  getFoundationStepDelay,
+  getFoundationStreamInterval,
+} from './CardAnimation.ts';
 import { getCardFlightPoint } from './CardFlight.ts';
 import { getCardDepthTransition } from './CardMotionDepth.ts';
 import { isCommittedCardDrop } from './DropGeometry.ts';
@@ -77,6 +83,7 @@ export class TrifoldBoardView {
   private inputLocked = true;
   private uiPaused = false;
   private initialDealPending = false;
+  private pendingDragonCollectionCell: number | null = null;
   private dragState: DragState | null = null;
   private lastTap: { readonly cardId: CardId; readonly time: number } | null = null;
   private destroyed = false;
@@ -139,7 +146,7 @@ export class TrifoldBoardView {
           this.dealStackVisual.sync(0);
           this.updateDealStack();
           const settle = this.actions.settleInitialAutoMoves();
-          this.playOperationList(settle.operations, () => {
+          this.playAutomaticStream(settle.operations, () => {
             this.syncToState();
             this.inputLocked = this.uiPaused || settle.won;
             this.actions.settled();
@@ -191,12 +198,16 @@ export class TrifoldBoardView {
     this.actions.sound('button');
     const dragonOperations = result.operations.filter((operation) => operation.reason === 'dragon');
     const automaticOperations = result.operations.filter((operation) => operation.reason === 'auto');
-    this.animateOperationsConcurrently(dragonOperations, getCardMotionDuration('player'), () => {
-      this.playOperationList(automaticOperations, () => {
+    const destination = dragonOperations[0]?.to;
+    this.pendingDragonCollectionCell = destination?.zone === 'dragon-cell' ? destination.cell : null;
+    this.redrawSlots();
+    this.animateOperationsConcurrently(dragonOperations, getCardMotionDuration('foundation'), () => {
+      this.finishDragonCollectionVisual(dragonOperations);
+      this.playAutomaticStream(automaticOperations, () => {
         this.syncToState();
         this.inputLocked = this.uiPaused || result.won;
         this.actions.settled();
-      });
+      }, 20);
     });
   }
 
@@ -256,12 +267,12 @@ export class TrifoldBoardView {
     this.actions.sound('card-place');
     const playerOperations = result.operations.filter((operation) => operation.reason === 'player');
     const automaticOperations = result.operations.filter((operation) => operation.reason === 'auto');
-    this.animateOperationsConcurrently(playerOperations, getCardMotionDuration('player'), () => {
-      this.playOperationList(automaticOperations, () => {
+    this.animateOperationsConcurrently(playerOperations, getCardMotionDuration('foundation'), () => {
+      this.playAutomaticStream(automaticOperations, () => {
         this.syncToState();
         this.inputLocked = this.uiPaused || result.won;
         this.actions.settled();
-      });
+      }, getFoundationStepDelay() - getCardMotionDuration('foundation'));
     });
   }
 
@@ -322,11 +333,11 @@ export class TrifoldBoardView {
     // Direct drag/drop in Cascade settles on release with no travel tween. Only the
     // automatic follow-up chain is animated after the dragged cards have snapped.
     this.applyOperationsImmediately(playerOperations);
-    this.playOperationList(automaticOperations, () => {
+    this.playAutomaticStream(automaticOperations, () => {
       this.syncToState();
       this.inputLocked = this.uiPaused || result.won;
       this.actions.settled();
-    });
+    }, getCardMotionDuration('player') + 20);
   }
 
   private resolveDropCommand(drag: DragState): PlayerCommand | null {
@@ -435,6 +446,7 @@ export class TrifoldBoardView {
     const radius = Math.max(4, this.layout.cardWidth * 0.06);
     const freeSlotAlpha = 0.42;
     const foundationSlotAlpha = 0.56;
+    const tableauSlotAlpha = 0.34;
 
     this.slots.clear();
     this.slots.lineStyle(lineWidth, 0x8aa095, freeSlotAlpha);
@@ -460,6 +472,17 @@ export class TrifoldBoardView {
       );
     }
 
+    this.slots.lineStyle(lineWidth, 0x8aa095, tableauSlotAlpha);
+    for (const x of this.layout.tableauX) {
+      this.slots.strokeRoundedRect(
+        x,
+        this.layout.tableauY,
+        this.layout.cardWidth,
+        this.layout.cardHeight,
+        radius,
+      );
+    }
+
     this.slots.lineStyle(Math.max(1, lineWidth * 0.9), 0x8aa095, 0.5);
     for (const bounds of this.layout.dragonControls) {
       this.slots.strokeRoundedRect(
@@ -473,7 +496,7 @@ export class TrifoldBoardView {
 
     this.layout.freeCells.forEach((point, index) => {
       const cell = this.game.state.freeCells[index];
-      if (cell?.kind === 'dragons') {
+      if (cell?.kind === 'dragons' && index !== this.pendingDragonCollectionCell) {
         drawSchematicCardBack(
           this.slots,
           point.x,
@@ -504,6 +527,15 @@ export class TrifoldBoardView {
         .setFontSize(Math.max(8, bounds.height * 0.34))
         .setAlpha(0.78);
     });
+  }
+
+  private finishDragonCollectionVisual(operations: readonly CardOperation[]): void {
+    for (const operation of operations) {
+      const view = this.cards.get(operation.cardId);
+      if (view) view.setVisible(false);
+    }
+    this.pendingDragonCollectionCell = null;
+    this.redrawSlots();
   }
 
   private updateDealStack(): void {
@@ -614,6 +646,67 @@ export class TrifoldBoardView {
     return point ? { x: point.x, y: point.y, depth: 760 + location.cell, source: null } : null;
   }
 
+  private playAutomaticStream(
+    operations: readonly CardOperation[],
+    onComplete: () => void,
+    initialDelay = 0,
+  ): void {
+    if (operations.length === 0) {
+      onComplete();
+      return;
+    }
+
+    const pending = [...operations];
+    const busyLanes = new Set<string>();
+    let activeFlights = 0;
+    let finished = false;
+
+    const finishIfSettled = (): void => {
+      if (finished || pending.length > 0 || activeFlights > 0) return;
+      finished = true;
+      onComplete();
+    };
+
+    const scheduleStep = (delay: number): void => {
+      let timer: Phaser.Time.TimerEvent;
+      timer = this.scene.time.delayedCall(Math.max(0, delay), () => {
+        this.activeTimers.delete(timer);
+        if (this.destroyed || finished) return;
+
+        const nextIndex = pending.findIndex((operation) => {
+          const lane = operation.to.zone === 'foundation' ? operation.to.suit : 'flower';
+          return !busyLanes.has(lane);
+        });
+
+        if (nextIndex >= 0) {
+          const [operation] = pending.splice(nextIndex, 1);
+          if (operation) {
+            const lane = operation.to.zone === 'foundation' ? operation.to.suit : 'flower';
+            const target = this.pointForLocation(operation.to);
+            if (target) {
+              busyLanes.add(lane);
+              activeFlights += 1;
+              this.animateCard(operation.cardId, target, getCardMotionDuration('foundation'), () => {
+                busyLanes.delete(lane);
+                activeFlights -= 1;
+                this.actions.sound('card-place');
+                finishIfSettled();
+              });
+            }
+          }
+        }
+
+        finishIfSettled();
+        if (!finished && pending.length > 0) {
+          scheduleStep(getFoundationStreamInterval());
+        }
+      });
+      this.activeTimers.add(timer);
+    };
+
+    scheduleStep(initialDelay);
+  }
+
   private playOperationList(
     operations: readonly CardOperation[],
     onComplete: () => void,
@@ -686,6 +779,7 @@ export class TrifoldBoardView {
 
   private cancelAnimations(): void {
     this.dragState = null;
+    this.pendingDragonCollectionCell = null;
     for (const timer of this.activeTimers) timer.remove(false);
     this.activeTimers.clear();
     for (const tween of this.activeTweens) tween.stop();

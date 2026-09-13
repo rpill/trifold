@@ -39,3 +39,15 @@ test('dragon buttons use a persistent dull-yellow style and brighten only when c
     assert.ok(scene.includes(required), `expected dragon control styling to include ${required}`);
   }
 });
+
+
+test('completed dragon family uses a darker third visual state', () => {
+  for (const required of [
+    'completed: boolean',
+    "cell.kind === 'dragons' && cell.family === family",
+    '0x4f4524',
+    'control.completed = completed',
+  ]) {
+    assert.ok(scene.includes(required), `expected completed dragon styling to include ${required}`);
+  }
+});

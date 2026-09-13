@@ -39,6 +39,7 @@ interface SceneControl {
   readonly text: string;
   readonly variant: ControlVariant;
   enabled: boolean;
+  completed: boolean;
 }
 
 const DRAGONS: readonly DragonFamily[] = ['red', 'green', 'white'];
@@ -240,7 +241,7 @@ export class GameScene extends Phaser.Scene {
       fontStyle: 'bold',
       align: 'center',
     }).setOrigin(0.5).setDepth(2001);
-    const control: SceneControl = { zone, graphics, label, text, variant, enabled: true };
+    const control: SceneControl = { zone, graphics, label, text, variant, enabled: true, completed: false };
     zone.on('pointerdown', () => {
       if (!control.enabled) return;
       if (playButtonSound) this.sfx?.play('button');
@@ -254,21 +255,29 @@ export class GameScene extends Phaser.Scene {
     control.graphics.clear();
     const dragon = control.variant === 'dragon';
     const fillColor = dragon
-      ? (control.enabled ? 0xd7b84d : 0x8b7430)
+      ? (control.completed ? 0x4f4524 : control.enabled ? 0xd7b84d : 0x8b7430)
       : 0x264b3b;
     const lineColor = dragon
-      ? (control.enabled ? 0xf0d778 : 0xb49a4b)
+      ? (control.completed ? 0x70633a : control.enabled ? 0xf0d778 : 0xb49a4b)
       : 0x91ad9f;
-    const fillAlpha = dragon ? (control.enabled ? 0.98 : 0.72) : (control.enabled ? 0.95 : 0.45);
-    const lineAlpha = dragon ? (control.enabled ? 1 : 0.72) : (control.enabled ? 0.9 : 0.35);
+    const fillAlpha = dragon
+      ? (control.completed ? 0.62 : control.enabled ? 0.98 : 0.72)
+      : (control.enabled ? 0.95 : 0.45);
+    const lineAlpha = dragon
+      ? (control.completed ? 0.5 : control.enabled ? 1 : 0.72)
+      : (control.enabled ? 0.9 : 0.35);
     control.graphics.fillStyle(fillColor, fillAlpha);
     control.graphics.lineStyle(Math.max(1, bounds.height * 0.04), lineColor, lineAlpha);
     control.graphics.fillRoundedRect(bounds.x, bounds.y, bounds.width, bounds.height, Math.max(4, bounds.height * 0.18));
     control.graphics.strokeRoundedRect(bounds.x, bounds.y, bounds.width, bounds.height, Math.max(4, bounds.height * 0.18));
     control.label.setPosition(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
     control.label.setFontSize(Math.max(9, Math.min(bounds.height * 0.34, bounds.width / Math.max(3, control.text.length * 0.58))));
-    control.label.setColor(dragon ? (control.enabled ? '#30270d' : '#d8c987') : '#edf5f0');
-    control.label.setAlpha(dragon ? 1 : (control.enabled ? 1 : 0.45));
+    control.label.setColor(
+      dragon
+        ? (control.completed ? '#8f845e' : control.enabled ? '#30270d' : '#d8c987')
+        : '#edf5f0',
+    );
+    control.label.setAlpha(dragon ? (control.completed ? 0.82 : 1) : (control.enabled ? 1 : 0.45));
     control.zone.setPosition(bounds.x, bounds.y).setSize(bounds.width, bounds.height);
     if (control.enabled) {
       control.zone.setInteractive(
@@ -295,7 +304,15 @@ export class GameScene extends Phaser.Scene {
     if (this.undoControl) this.undoControl.enabled = this.boardReady && game?.canUndo === true;
     for (const family of DRAGONS) {
       const control = this.dragonControls.get(family);
-      if (control) control.enabled = this.boardReady && game !== null && canCollectDragons(game.state, family) !== null;
+      if (!control) continue;
+      const completed = game?.state.freeCells.some(
+        (cell) => cell.kind === 'dragons' && cell.family === family,
+      ) === true;
+      control.completed = completed;
+      control.enabled = !completed
+        && this.boardReady
+        && game !== null
+        && canCollectDragons(game.state, family) !== null;
     }
     if (this.currentLayout) this.applyControlLayout(this.currentLayout);
   }

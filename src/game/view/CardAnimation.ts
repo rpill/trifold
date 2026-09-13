@@ -8,9 +8,19 @@ const CARD_MOTION_DURATION: Record<CardMotionKind, number> = {
 };
 
 export const DEAL_STAGGER_MS = 52;
+const FOUNDATION_STEP_DELAY = 370;
+const FOUNDATION_STREAM_INTERVAL = 150;
 
 export function getCardMotionDuration(kind: CardMotionKind): number {
   return CARD_MOTION_DURATION[kind];
+}
+
+export function getFoundationStepDelay(): number {
+  return FOUNDATION_STEP_DELAY;
+}
+
+export function getFoundationStreamInterval(): number {
+  return FOUNDATION_STREAM_INTERVAL;
 }
 
 export function getDealFlightOriginY(

@@ -71,7 +71,6 @@ test('direct drag drops and rejected drops settle immediately without player twe
   const snapBack = board.slice(snapStart, concurrentStart);
 
   assert.ok(dragEnd.includes('applyOperationsImmediately(playerOperations)'));
-  assert.equal(dragEnd.includes("getCardMotionDuration('player')"), false, 'drag placement must not tween');
   assert.equal(dragEnd.includes('animateOperationsConcurrently(playerOperations'), false, 'drag placement must not tween');
   assert.ok(snapBack.includes('this.syncToState()'));
   assert.equal(snapBack.includes('animateCard('), false, 'rejected drag must snap back immediately');
@@ -137,4 +136,65 @@ test('collected dragon cells render a schematic card back and hide the FREE labe
   for (const required of ["cell?.kind === 'dragons'", 'drawSchematicCardBack', "cell?.kind === 'empty'"]) {
     assert.ok(board.includes(required), `expected collected-dragon rendering to include ${required}`);
   }
+});
+
+test('dragon collection shows the blocked back only after all four dragons finish flying', () => {
+  const board = source('../src/game/view/TrifoldBoardView.ts');
+  const collectStart = board.indexOf('collectDragons(family: DragonFamily): void');
+  const pauseStart = board.indexOf('setUiPaused(paused: boolean)', collectStart);
+  assert.ok(collectStart >= 0 && pauseStart > collectStart, 'expected collectDragons method');
+  const collect = board.slice(collectStart, pauseStart);
+
+  assert.ok(collect.includes('pendingDragonCollectionCell'), 'destination cell should be suppressed while dragons fly');
+  assert.ok(collect.includes('finishDragonCollectionVisual(dragonOperations)'), 'blocked back should be finalized after flight');
+  assert.ok(collect.includes("getCardMotionDuration('foundation')"), 'dragon collection should use a visible service-flight duration');
+  assert.ok(
+    collect.indexOf('finishDragonCollectionVisual(dragonOperations)') < collect.indexOf('playAutomaticStream(automaticOperations'),
+    'blocked back should appear before any automatic follow-up moves',
+  );
+
+  const redrawStart = board.indexOf('private redrawSlots(): void');
+  const dealStart = board.indexOf('private updateDealStack(): void', redrawStart);
+  const redraw = board.slice(redrawStart, dealStart);
+  assert.ok(redraw.includes('index !== this.pendingDragonCollectionCell'), 'pending destination must not draw a back early');
+
+  const finishStart = board.indexOf('private finishDragonCollectionVisual');
+  const nextMethod = board.indexOf('private ', finishStart + 10);
+  const finish = board.slice(finishStart, nextMethod > finishStart ? nextMethod : undefined);
+  assert.ok(finish.includes('view.setVisible(false)'), 'arrived dragon faces must disappear before the blocked back is drawn');
+  assert.ok(finish.includes('this.pendingDragonCollectionCell = null'));
+  assert.ok(finish.includes('this.redrawSlots()'));
+});
+
+test('automatic foundation chains use Cascade-style streamed flights instead of waiting for each landing', () => {
+  const board = source('../src/game/view/TrifoldBoardView.ts');
+  const animation = source('../src/game/view/CardAnimation.ts');
+  assert.ok(animation.includes('FOUNDATION_STREAM_INTERVAL = 150'), 'Cascade stream cadence must stay 150ms');
+  assert.ok(animation.includes('getFoundationStreamInterval'), 'stream interval should be exposed through CardAnimation');
+  assert.ok(board.includes('playAutomaticStream'), 'automatic moves need a dedicated stream scheduler');
+  assert.ok(board.includes('busyLanes'), 'stream must lock each foundation lane independently');
+  assert.ok(board.includes("operation.to.zone === 'foundation' ? operation.to.suit : 'flower'"), 'foundation suits and flower need independent lanes');
+
+  const dragStart = board.indexOf('private handleDragEnd');
+  const dropResolve = board.indexOf('private resolveDropCommand', dragStart);
+  const dragBlock = board.slice(dragStart, dropResolve);
+  assert.ok(dragBlock.includes('playAutomaticStream(automaticOperations'), 'drag auto-chain should stream');
+  assert.equal(dragBlock.includes('playOperationList(automaticOperations'), false, 'drag auto-chain must not be serial');
+
+  const dealStart = board.indexOf('playInitialDeal(): void');
+  const relayoutStart = board.indexOf('relayout(layout: ViewportLayout)', dealStart);
+  const dealBlock = board.slice(dealStart, relayoutStart);
+  assert.ok(dealBlock.includes('playAutomaticStream(settle.operations'), 'initial auto-finish should stream');
+});
+
+test('tableau columns render persistent slot outlines beneath cards', () => {
+  const board = source('../src/game/view/TrifoldBoardView.ts');
+  const redrawStart = board.indexOf('private redrawSlots(): void');
+  const finishStart = board.indexOf('private finishDragonCollectionVisual', redrawStart);
+  assert.ok(redrawStart >= 0 && finishStart > redrawStart, 'expected redrawSlots method');
+  const redraw = board.slice(redrawStart, finishStart);
+
+  assert.ok(redraw.includes('tableauSlotAlpha'), 'tableau placeholders should have their own subdued alpha');
+  assert.ok(redraw.includes('for (const x of this.layout.tableauX)'), 'all eight tableau columns need a placeholder');
+  assert.ok(redraw.includes('this.layout.tableauY'), 'tableau placeholders must sit at the tableau origin');
 });
