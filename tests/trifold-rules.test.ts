@@ -136,7 +136,7 @@ test('foundation rejects dragons and flower', () => {
   }
 });
 
-test('dragon collection requires four exposed matching dragons and an empty free cell', () => {
+test('dragon collection follows Shenzhen destination rules for exposed matching dragons', () => {
   const legal = state({
     tableau: [['dragon-red-1'], ['dragon-red-2'], ['dragon-red-3'], [], [], [], [], []],
     freeCells: [{ kind: 'card', cardId: 'dragon-red-4' }, { kind: 'empty' }, { kind: 'card', cardId: 'coins-1' }],
@@ -149,7 +149,7 @@ test('dragon collection requires four exposed matching dragons and an empty free
       { zone: 'tableau', column: 2, index: 0 },
       { zone: 'free-cell', cell: 0 },
     ],
-    destinationCell: 1,
+    destinationCell: 0,
   });
 
   const buried = state({
@@ -165,7 +165,26 @@ test('dragon collection requires four exposed matching dragons and an empty free
       { kind: 'card', cardId: 'bamboo-1' },
     ],
   });
-  assert.equal(canCollectDragons(noEmpty, 'red'), null);
+  assert.deepEqual(canCollectDragons(noEmpty, 'red'), {
+    family: 'red',
+    sources: [
+      { zone: 'tableau', column: 0, index: 0 },
+      { zone: 'tableau', column: 1, index: 0 },
+      { zone: 'tableau', column: 2, index: 0 },
+      { zone: 'free-cell', cell: 0 },
+    ],
+    destinationCell: 0,
+  });
+
+  const noDestination = state({
+    tableau: [['dragon-red-1'], ['dragon-red-2'], ['dragon-red-3'], ['dragon-red-4'], [], [], [], []],
+    freeCells: [
+      { kind: 'card', cardId: 'coins-1' },
+      { kind: 'card', cardId: 'bamboo-1' },
+      { kind: 'card', cardId: 'characters-1' },
+    ],
+  });
+  assert.equal(canCollectDragons(noDestination, 'red'), null);
 
   const completed = state({
     freeCells: [

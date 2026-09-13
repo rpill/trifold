@@ -121,8 +121,6 @@ export function canCollectDragons(
   family: DragonFamily,
 ): DragonCollection | null {
   if (state.freeCells.some((cell) => cell.kind === 'dragons' && cell.family === family)) return null;
-  const destinationCell = state.freeCells.findIndex((cell) => cell.kind === 'empty');
-  if (destinationCell < 0) return null;
 
   const sources: CardSource[] = [];
   for (let column = 0; column < state.tableau.length; column += 1) {
@@ -133,13 +131,22 @@ export function canCollectDragons(
       sources.push({ zone: 'tableau', column, index: cards.length - 1 });
     }
   }
+
+  let matchingDragonCell = -1;
   for (let cell = 0; cell < state.freeCells.length; cell += 1) {
     const entry = state.freeCells[cell];
     if (entry?.kind !== 'card') continue;
     const card = getCard(entry.cardId);
-    if (card.kind === 'dragon' && card.family === family) sources.push({ zone: 'free-cell', cell });
+    if (card.kind !== 'dragon' || card.family !== family) continue;
+    sources.push({ zone: 'free-cell', cell });
+    if (matchingDragonCell < 0) matchingDragonCell = cell;
   }
+
   if (sources.length !== 4) return null;
+  const destinationCell = matchingDragonCell >= 0
+    ? matchingDragonCell
+    : state.freeCells.findIndex((cell) => cell.kind === 'empty');
+  if (destinationCell < 0) return null;
   return { family, sources, destinationCell };
 }
 

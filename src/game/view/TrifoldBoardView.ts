@@ -472,11 +472,24 @@ export class TrifoldBoardView {
     }
 
     this.layout.freeCells.forEach((point, index) => {
+      const cell = this.game.state.freeCells[index];
+      if (cell?.kind === 'dragons') {
+        drawSchematicCardBack(
+          this.slots,
+          point.x,
+          point.y,
+          this.layout.cardWidth,
+          this.layout.cardHeight,
+          false,
+        );
+      }
       const label = this.slotLabels[index];
       label?.setPosition(
         point.x + this.layout.cardWidth / 2,
         point.y + this.layout.cardHeight / 2,
-      ).setFontSize(Math.max(8, this.layout.cardWidth * 0.105)).setAlpha(0.62);
+      ).setFontSize(Math.max(8, this.layout.cardWidth * 0.105))
+        .setAlpha(0.62)
+        .setVisible(cell?.kind === 'empty');
     });
     foundationSlots.forEach((point, index) => {
       const label = this.slotLabels[3 + index];
@@ -562,6 +575,7 @@ export class TrifoldBoardView {
   }
 
   private syncToState(): void {
+    this.redrawSlots();
     const placements = this.calculatePlacements();
     for (const [cardId, view] of this.cards) {
       const placement = placements.get(cardId);

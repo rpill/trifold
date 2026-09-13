@@ -25,10 +25,17 @@ test('GameScene wires deal source, controls, SFX preload and victory without ran
     'Verified deal catalog unavailable', 'startNewDeal', 'requestUndo', 'collectDragons',
     'SfxController', 'SFX_ASSETS', 'loaderror', 'missingSfxKeys', 'const sound = this.sound', 'return sound.locked',
     "this.sfx?.play('victory')", 'isWon', 'Новая раздача', 'Отмена', 'RD', 'GD', 'WD',
-    "this.createControl(DRAGON_LABELS[family], () => this.collectDragons(family), false)",
+    "this.createControl(DRAGON_LABELS[family]",
   ]) {
     assert.ok(scene.includes(required), `expected GameScene to include ${required}`);
   }
   assert.equal(scene.includes('Date.now()'), false);
   assert.equal(scene.includes('Math.random()'), false);
+});
+
+
+test('dragon buttons use a persistent dull-yellow style and brighten only when collectable', () => {
+  for (const required of ['variant', "'dragon'", '0x8b7430', '0xd7b84d', 'canCollectDragons']) {
+    assert.ok(scene.includes(required), `expected dragon control styling to include ${required}`);
+  }
 });

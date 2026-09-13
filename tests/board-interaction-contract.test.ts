@@ -130,3 +130,11 @@ test('schematic cards stay playable with compact corner rank/type and no long ov
     assert.equal(card.includes(forbidden), false, `compact card face must not include ${forbidden}`);
   }
 });
+
+
+test('collected dragon cells render a schematic card back and hide the FREE label', () => {
+  const board = source('../src/game/view/TrifoldBoardView.ts');
+  for (const required of ["cell?.kind === 'dragons'", 'drawSchematicCardBack', "cell?.kind === 'empty'"]) {
+    assert.ok(board.includes(required), `expected collected-dragon rendering to include ${required}`);
+  }
+});
