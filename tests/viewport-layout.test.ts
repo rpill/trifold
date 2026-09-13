@@ -49,8 +49,24 @@ for (const [width, height, profile] of [[844,390,'compact-landscape'], [1280,720
       assert.equal(intersects(tableau, layout.newDealControl), false);
       assert.equal(intersects(tableau, layout.undoControl), false);
     }
+
+    const firstFoundation = layout.foundations[0];
+    assert.ok(firstFoundation);
+    assert.ok(firstFoundation.x - (layout.flowerFoundation.x + layout.cardWidth) >= (layout.profile === 'compact-landscape' ? 8 : 14), 'F/deal slot should be visually separated from numeric foundations');
   });
 }
+
+test('deal origin is the flower slot and is separated from the three numeric foundations', () => {
+  for (const [width, height] of [[844, 390], [1280, 720]] as const) {
+    const layout = calculateViewportLayout(width, height);
+    assert.equal(layout.dealOrigin.x, layout.flowerFoundation.x);
+    assert.equal(layout.dealOrigin.y, layout.flowerFoundation.y);
+    const firstFoundation = layout.foundations[0];
+    assert.ok(firstFoundation);
+    const gap = firstFoundation.x - (layout.flowerFoundation.x + layout.cardWidth);
+    assert.ok(gap >= (layout.profile === 'compact-landscape' ? 8 : 14));
+  }
+});
 
 test('standard cards are at least as wide as compact cards', () => {
   const compact = calculateViewportLayout(844, 390);
@@ -100,5 +116,24 @@ test('abrupt landscape resize sequence always produces valid fresh geometry', ()
     const fifthBottom = tableauCardY(layout, 5, 4) + layout.cardHeight;
     const boardBottom = layout.boardBounds.y + layout.boardBounds.height - layout.bottomMargin;
     assert.ok(fifthBottom <= boardBottom + 1e-6, `${width}x${height}: fifth card clipped`);
+  }
+});
+
+test('five-card tableau uses the available vertical space instead of a cramped fixed fan', () => {
+  const compact = calculateViewportLayout(844, 390);
+  const standard = calculateViewportLayout(1280, 720);
+  assert.ok(compact.tableauCardGap >= 28, `compact gap too tight: ${compact.tableauCardGap}`);
+  assert.ok(standard.tableauCardGap >= 40, `standard gap too tight: ${standard.tableauCardGap}`);
+});
+
+test('F/deal slot is more isolated from R/G/B than numeric foundations are from each other', () => {
+  for (const [width, height] of [[844, 390], [1280, 720]] as const) {
+    const layout = calculateViewportLayout(width, height);
+    const first = layout.foundations[0];
+    const second = layout.foundations[1];
+    assert.ok(first && second);
+    const flowerGap = first.x - (layout.flowerFoundation.x + layout.cardWidth);
+    const foundationGap = second.x - (first.x + layout.cardWidth);
+    assert.ok(flowerGap > foundationGap, `${width}x${height}: F gap ${flowerGap} <= numeric gap ${foundationGap}`);
   }
 });

@@ -20,12 +20,13 @@ import type {
   TransactionResult,
 } from '../model/types.ts';
 import type { SfxCue } from '../../settings/SfxController.ts';
-import { DEAL_STAGGER_MS, getCardMotionDuration } from './CardAnimation.ts';
+import { DEAL_STAGGER_MS, getCardMotionDuration, getDealFlightOriginY } from './CardAnimation.ts';
 import { getCardFlightPoint } from './CardFlight.ts';
 import { getCardDepthTransition } from './CardMotionDepth.ts';
 import { isCommittedCardDrop } from './DropGeometry.ts';
 import { tableauCardY } from './layout.ts';
-import { SchematicCardView } from './SchematicCardView.ts';
+import { drawSchematicCardBack, SchematicCardView } from './SchematicCardView.ts';
+import { DealStackVisualState } from './DealStackVisualState.ts';
 import type { ViewportLayout } from './ViewportLayout.ts';
 
 export interface BoardActions {
@@ -66,6 +67,8 @@ export class TrifoldBoardView {
   private readonly actions: BoardActions;
   private readonly cards = new Map<CardId, SchematicCardView>();
   private readonly slots: Phaser.GameObjects.Graphics;
+  private readonly dealStack: Phaser.GameObjects.Graphics;
+  private readonly dealStackVisual = new DealStackVisualState(0);
   private readonly slotLabels: Phaser.GameObjects.Text[] = [];
   private readonly activeTweens = new Set<Phaser.Tweens.Tween>();
   private readonly activeTimers = new Set<Phaser.Time.TimerEvent>();
@@ -90,6 +93,7 @@ export class TrifoldBoardView {
     this.layout = layout;
     this.dragDistanceThreshold = scene.input.dragDistanceThreshold;
     this.slots = scene.add.graphics().setDepth(2);
+    this.dealStack = scene.add.graphics().setDepth(4);
 
     for (const card of createDeck()) {
       const view = new SchematicCardView(scene, card.id, layout.cardWidth, layout.cardHeight);
@@ -109,6 +113,8 @@ export class TrifoldBoardView {
     this.syncVisibility(false);
 
     const sequence = getInitialDealSequence(createDeal(this.game.snapshot().seed));
+    this.dealStackVisual.sync(sequence.length);
+    this.updateDealStack();
     sequence.forEach((cardId, index) => {
       const timer = this.scene.time.delayedCall(index * DEAL_STAGGER_MS, () => {
         this.activeTimers.delete(timer);
@@ -116,13 +122,22 @@ export class TrifoldBoardView {
         const view = this.cards.get(cardId);
         const placement = this.calculatePlacements().get(cardId);
         if (!view || !placement) return;
+        const dealOriginY = getDealFlightOriginY(
+          this.layout.dealOrigin.y,
+          this.dealStackVisual.getLayerOffsets(this.layout.profile),
+        );
+        this.dealStackVisual.removeDealtCard();
+        this.updateDealStack();
         view.setVisible(true);
-        view.setPosition(this.layout.dealOrigin.x, this.layout.dealOrigin.y);
+        view.setFaceDown(false);
+        view.setPosition(this.layout.dealOrigin.x, dealOriginY);
         view.setDepth(3000 + index);
         this.actions.sound('deal');
         this.animateCard(cardId, placement, getCardMotionDuration('deal'), () => {
           if (index !== sequence.length - 1 || !this.initialDealPending) return;
           this.initialDealPending = false;
+          this.dealStackVisual.sync(0);
+          this.updateDealStack();
           const settle = this.actions.settleInitialAutoMoves();
           this.playOperationList(settle.operations, () => {
             this.syncToState();
@@ -141,6 +156,9 @@ export class TrifoldBoardView {
     this.cancelAnimations();
     this.dragState = null;
     this.initialDealPending = false;
+    this.dealStackVisual.sync(0);
+    this.dealStack.clear();
+    this.dealStack.setVisible(false);
     this.layout = layout;
     for (const view of this.cards.values()) view.relayout(layout.cardWidth, layout.cardHeight);
     this.redrawSlots();
@@ -195,6 +213,7 @@ export class TrifoldBoardView {
     for (const view of this.cards.values()) view.destroy();
     this.cards.clear();
     this.slots.destroy();
+    this.dealStack.destroy();
     for (const label of this.slotLabels) label.destroy();
     this.slotLabels.length = 0;
   }
@@ -371,6 +390,7 @@ export class TrifoldBoardView {
       const view = this.cards.get(operation.cardId);
       if (!target || !view) continue;
       view.setVisible(true);
+      view.setFaceDown(false);
       view.setPosition(target.x, target.y);
       view.setDepth(target.depth);
     }
@@ -411,39 +431,87 @@ export class TrifoldBoardView {
   }
 
   private redrawSlots(): void {
-    const lineWidth = Math.max(1, this.layout.cardWidth * 0.018);
+    const lineWidth = Math.max(1, this.layout.cardWidth * 0.015);
+    const radius = Math.max(4, this.layout.cardWidth * 0.06);
+    const freeSlotAlpha = 0.42;
+    const foundationSlotAlpha = 0.56;
+
     this.slots.clear();
-    this.slots.lineStyle(lineWidth, 0x8aa095, 0.72);
-    const cardSlots = [
-      ...this.layout.freeCells,
-      this.layout.flowerFoundation,
-      ...this.layout.foundations,
-    ];
-    for (const point of cardSlots) {
+    this.slots.lineStyle(lineWidth, 0x8aa095, freeSlotAlpha);
+    for (const point of this.layout.freeCells) {
       this.slots.strokeRoundedRect(
         point.x,
         point.y,
         this.layout.cardWidth,
         this.layout.cardHeight,
-        Math.max(4, this.layout.cardWidth * 0.06),
+        radius,
       );
     }
-    for (const bounds of this.layout.dragonControls) {
-      this.slots.strokeRoundedRect(bounds.x, bounds.y, bounds.width, bounds.height, Math.max(3, bounds.height * 0.18));
+
+    this.slots.lineStyle(lineWidth, 0x8aa095, foundationSlotAlpha);
+    const foundationSlots = [this.layout.flowerFoundation, ...this.layout.foundations];
+    for (const point of foundationSlots) {
+      this.slots.strokeRoundedRect(
+        point.x,
+        point.y,
+        this.layout.cardWidth,
+        this.layout.cardHeight,
+        radius,
+      );
     }
 
-    const slotCenters = cardSlots.map((point) => ({
-      x: point.x + this.layout.cardWidth / 2,
-      y: point.y + this.layout.cardHeight / 2,
-    }));
-    slotCenters.forEach((point, index) => {
+    this.slots.lineStyle(Math.max(1, lineWidth * 0.9), 0x8aa095, 0.5);
+    for (const bounds of this.layout.dragonControls) {
+      this.slots.strokeRoundedRect(
+        bounds.x,
+        bounds.y,
+        bounds.width,
+        bounds.height,
+        Math.max(3, bounds.height * 0.18),
+      );
+    }
+
+    this.layout.freeCells.forEach((point, index) => {
       const label = this.slotLabels[index];
-      label?.setPosition(point.x, point.y).setFontSize(Math.max(8, this.layout.cardWidth * 0.12));
+      label?.setPosition(
+        point.x + this.layout.cardWidth / 2,
+        point.y + this.layout.cardHeight / 2,
+      ).setFontSize(Math.max(8, this.layout.cardWidth * 0.105)).setAlpha(0.62);
+    });
+    foundationSlots.forEach((point, index) => {
+      const label = this.slotLabels[3 + index];
+      label?.setPosition(
+        point.x + this.layout.cardWidth / 2,
+        point.y + this.layout.cardHeight / 2,
+      ).setFontSize(Math.max(8, this.layout.cardWidth * 0.12)).setAlpha(0.72);
     });
     this.layout.dragonControls.forEach((bounds, index) => {
       const label = this.slotLabels[7 + index];
       label?.setPosition(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2)
-        .setFontSize(Math.max(8, bounds.height * 0.34));
+        .setFontSize(Math.max(8, bounds.height * 0.34))
+        .setAlpha(0.78);
+    });
+  }
+
+  private updateDealStack(): void {
+    const offsets = this.dealStackVisual.getLayerOffsets(this.layout.profile);
+    this.dealStack.clear();
+    this.dealStack.setVisible(offsets.length > 0);
+    if (offsets.length === 0) return;
+
+    const width = this.layout.cardWidth;
+    const height = this.layout.cardHeight;
+
+    offsets.forEach((offset, index) => {
+      const top = index === offsets.length - 1;
+      drawSchematicCardBack(
+        this.dealStack,
+        this.layout.dealOrigin.x,
+        this.layout.dealOrigin.y + offset,
+        width,
+        height,
+        !top,
+      );
     });
   }
 
@@ -499,6 +567,7 @@ export class TrifoldBoardView {
       const placement = placements.get(cardId);
       view.setVisible(placement !== undefined);
       if (!placement) continue;
+      view.setFaceDown(false);
       view.setPosition(placement.x, placement.y);
       view.setDepth(placement.depth);
     }

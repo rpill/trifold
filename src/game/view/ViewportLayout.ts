@@ -91,10 +91,11 @@ export function calculateViewportLayout(
 
   const topGap = compact ? 4 : 8;
   const dragonBudget = compact ? 78 : 132;
-  const topFit = Math.max(1, (boardWidth - dragonBudget - topGap * 7) / 7);
+  const dealClusterGap = compact ? 10 : 18;
+  const topFit = Math.max(1, (boardWidth - dragonBudget - topGap * 7 - dealClusterGap) / 7);
   const tableauMinGap = compact ? 5 : 10;
   const tableauFit = Math.max(1, (boardWidth - tableauMinGap * 7) / 8);
-  const rowGap = compact ? 8 : 18;
+  const rowGap = compact ? 10 : 22;
   const bottomMargin = compact ? 8 : 18;
   const minimumFanGap = compact ? 12 : 18;
   const heightFit = Math.max(
@@ -119,17 +120,21 @@ export function calculateViewportLayout(
     x: boardX + index * (cardWidth + topGap),
     y: topY,
   }));
-  const rightGroupWidth = cardWidth * 4 + topGap * 3;
-  const rightStart = boardRight - rightGroupWidth;
-  const flowerFoundation = { x: rightStart, y: topY };
+  const foundationGroupWidth = cardWidth * 3 + topGap * 2;
+  const foundationStart = boardRight - foundationGroupWidth;
+  const flowerFoundation = {
+    x: foundationStart - dealClusterGap - cardWidth,
+    y: topY,
+  };
+  const dealOrigin = flowerFoundation;
   const foundations = Array.from({ length: 3 }, (_, index) => ({
-    x: rightStart + (index + 1) * (cardWidth + topGap),
+    x: foundationStart + index * (cardWidth + topGap),
     y: topY,
   }));
 
   const leftEnd = freeCells[2].x + cardWidth;
   const centerStart = leftEnd + topGap;
-  const centerEnd = rightStart - topGap;
+  const centerEnd = flowerFoundation.x - topGap;
   const centerWidth = Math.max(1, centerEnd - centerStart);
   const dragonGap = compact ? 3 : 6;
   const dragonWidth = Math.max(1, Math.min(cardWidth * 0.5, (centerWidth - dragonGap * 2) / 3));
@@ -144,18 +149,19 @@ export function calculateViewportLayout(
   }));
 
   const tableauY = topY + cardHeight + rowGap;
-  const tableauCardGap = compact ? 20 : 30;
+  const preferredTableauGap = clamp(
+    compact ? 28 : 40,
+    cardHeight * (compact ? 0.3 : 0.27),
+    compact ? 34 : 46,
+  );
+  const initialDealGapLimit = Math.max(0, (boardBottom - bottomMargin - tableauY - cardHeight) / 4);
+  const tableauCardGap = Math.min(preferredTableauGap, initialDealGapLimit);
 
   const railX = boardRight + railGap;
   const controlHeight = compact ? 42 : 52;
   const controlGap = compact ? 8 : 12;
   const newDealControl = { x: railX, y: boardY, width: controlRailWidth, height: controlHeight };
   const undoControl = { x: railX, y: boardY + controlHeight + controlGap, width: controlRailWidth, height: controlHeight };
-  const dealOrigin = {
-    x: railX + Math.max(0, (controlRailWidth - cardWidth) / 2),
-    y: Math.max(boardY, boardBottom - cardHeight),
-  };
-
   return {
     viewportWidth: width,
     viewportHeight: height,

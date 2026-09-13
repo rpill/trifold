@@ -19,13 +19,15 @@ test('board carries Cascade motion primitives and resize-safe interaction geomet
     'Phaser.Math.Easing.Cubic.Out',
     'inputLocked',
     'settleInitialAutoMoves',
+    'dealOrigin',
+    'setFaceDown',
     'relayout',
     'width: this.layout.cardWidth',
     'height: this.layout.cardHeight',
   ]) {
     assert.ok(board.includes(required), `expected board source to include ${required}`);
   }
-  for (const required of ['setSize', 'setInteractive', 'Phaser.Geom.Rectangle.Contains', 'setDraggable']) {
+  for (const required of ['setSize', 'setInteractive', 'Phaser.Geom.Rectangle.Contains', 'setDraggable', 'faceDown', 'renderSurface', 'patternCell']) {
     assert.ok(card.includes(required), `expected schematic card source to include ${required}`);
   }
   for (const forbidden of ['StockVisualState', 'ThemeCatalog', 'Economy', 'coin-reward']) {
@@ -73,4 +75,58 @@ test('direct drag drops and rejected drops settle immediately without player twe
   assert.equal(dragEnd.includes('animateOperationsConcurrently(playerOperations'), false, 'drag placement must not tween');
   assert.ok(snapBack.includes('this.syncToState()'));
   assert.equal(snapBack.includes('animateCard('), false, 'rejected drag must snap back immediately');
+});
+
+
+test('technical deck stays visually distinct without a DEAL text label', () => {
+  const board = source('../src/game/view/TrifoldBoardView.ts');
+  assert.ok(board.includes('updateDealStack'));
+  assert.equal(board.includes("'DEAL'"), false, 'the schematic back should identify the deck without an extra DEAL label');
+  assert.ok(board.includes('freeSlotAlpha'));
+  assert.ok(board.includes('foundationSlotAlpha'));
+});
+
+
+test('initial deal uses the flower slot as its source and removes the temporary deck after dealing', () => {
+  const board = source('../src/game/view/TrifoldBoardView.ts');
+  assert.ok(board.includes('this.layout.dealOrigin.x'));
+  assert.ok(board.includes('this.dealStack.clear()'));
+  assert.ok(board.includes("['FREE', 'FREE', 'FREE', 'F', 'R', 'G', 'B', 'RD', 'GD', 'WD']"));
+  assert.equal(board.includes("'DEAL'"), false);
+});
+
+test('initial deal stack mirrors Cascade stock depletion instead of drawing a static decorative pile', () => {
+  const board = source('../src/game/view/TrifoldBoardView.ts');
+  for (const required of [
+    'DealStackVisualState', 'dealStackVisual', 'removeDealtCard()', 'updateDealStack',
+    'getDealFlightOriginY', "getLayerOffsets(this.layout.profile)",
+  ]) {
+    assert.ok(board.includes(required), `expected deal-stack source to include ${required}`);
+  }
+  assert.equal(board.includes('private drawDealStack()'), false, 'static decorative stack renderer must be removed');
+});
+
+
+test('initial deal cards leave the deck face-up instead of flipping on landing', () => {
+  const board = source('../src/game/view/TrifoldBoardView.ts');
+  const start = board.indexOf('playInitialDeal(): void');
+  const end = board.indexOf('relayout(layout: ViewportLayout)', start);
+  assert.ok(start >= 0 && end > start, 'expected playInitialDeal method');
+  const initialDeal = board.slice(start, end);
+  assert.equal(initialDeal.includes('setFaceDown(true)'), false, 'dealt card must not fly face-down');
+  assert.ok(initialDeal.includes('setFaceDown(false)'), 'dealt card should be explicitly face-up before flight');
+});
+
+
+test('schematic cards stay playable with compact corner rank/type and no long overlapping labels', () => {
+  const card = source('../src/game/view/SchematicCardView.ts');
+  for (const required of [
+    'topLeftRank', 'topLeftKind', 'centerLabel', 'bottomRightRank', 'bottomRightKind',
+    "return suit === 'coins' ? 'CO' : suit === 'bamboo' ? 'BA' : 'CH';",
+  ]) {
+    assert.ok(card.includes(required), `expected card source to include ${required}`);
+  }
+  for (const forbidden of ['centerSubLabel', 'debugLabel', 'COINS', 'BAMBOO', 'CHARACTERS', 'WHITE DRAGON']) {
+    assert.equal(card.includes(forbidden), false, `compact card face must not include ${forbidden}`);
+  }
 });

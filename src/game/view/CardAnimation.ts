@@ -12,3 +12,10 @@ export const DEAL_STAGGER_MS = 52;
 export function getCardMotionDuration(kind: CardMotionKind): number {
   return CARD_MOTION_DURATION[kind];
 }
+
+export function getDealFlightOriginY(
+  dealY: number,
+  layerOffsets: readonly number[],
+): number {
+  return dealY + (layerOffsets[layerOffsets.length - 1] ?? 0);
+}
