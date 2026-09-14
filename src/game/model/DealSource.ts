@@ -1,4 +1,4 @@
-import { VerifiedDealCatalog } from './VerifiedDealCatalog.ts';
+import { STANDARD_TIERS, VerifiedDealCatalog } from './VerifiedDealCatalog.ts';
 
 const MAX_UINT32 = 0xffff_ffff;
 
@@ -34,20 +34,20 @@ function randomCatalogIndex(size: number): number {
 }
 
 export class VerifiedCatalogDealSource implements DealSource {
-  private readonly catalog: VerifiedDealCatalog;
+  private readonly standardSeeds: readonly number[];
   private readonly randomIndex: (size: number) => number;
 
   constructor(catalog: VerifiedDealCatalog, randomIndex: (size: number) => number = randomCatalogIndex) {
-    if (catalog.size === 0) throw new Error('Verified deal catalog is empty.');
-    this.catalog = catalog;
+    this.standardSeeds = Object.freeze(STANDARD_TIERS.flatMap((tier) => [...catalog.getStandardSeeds(tier)]));
+    if (this.standardSeeds.length === 0) throw new Error('Verified Standard deal catalog is empty.');
     this.randomIndex = randomIndex;
   }
 
   nextSeed(_currentSeed?: number): number {
-    const index = this.randomIndex(this.catalog.size);
-    if (!Number.isSafeInteger(index) || index < 0 || index >= this.catalog.size) {
+    const index = this.randomIndex(this.standardSeeds.length);
+    if (!Number.isSafeInteger(index) || index < 0 || index >= this.standardSeeds.length) {
       throw new RangeError('Verified deal picker returned an invalid index.');
     }
-    return this.catalog.seedAt(index);
+    return this.standardSeeds[index];
   }
 }

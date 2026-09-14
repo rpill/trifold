@@ -81,3 +81,8 @@ worktrees/
 *.pid.lock
 *.seed
 *.stackdump
+
+# Offline verified-deal generation artifacts
+artifacts/deals/
+tools/trifold_solver
+tools/trifold_solver.exe

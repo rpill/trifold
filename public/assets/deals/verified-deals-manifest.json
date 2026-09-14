@@ -1,0 +1,60 @@
+{
+  "catalogVersion": 2,
+  "rulesVersion": 1,
+  "shuffleVersion": 1,
+  "seedEncoding": "uint32-le",
+  "difficultyModelVersion": 1,
+  "dailyAlgorithmVersion": 1,
+  "standardCounts": {
+    "onboarding": 500,
+    "easy": 13167,
+    "medium": 15361,
+    "hard": 10972
+  },
+  "dailyScheduleStart": "2026-01-01",
+  "dailyScheduleLength": 7305,
+  "verifiedCount": 47305,
+  "crossPoolDuplicateCount": 0,
+  "rejectedVerificationCount": 0,
+  "fastNodeBudget": 210000,
+  "slowNodeBudget": 4500000,
+  "sourceScanRanges": [
+    {
+      "source": "standard",
+      "startSeed": 1,
+      "scannedCount": 43104,
+      "endSeed": 43104
+    },
+    {
+      "source": "daily",
+      "startSeed": 1000000001,
+      "scannedCount": 9728,
+      "endSeed": 1000009728
+    }
+  ],
+  "solverSourceHash": "1d3b664d78b41ff403263d6f3cc950ef103c8c3b15a04c3d43a06a545a9f6573",
+  "gameRulesSourceHash": "8601b597df92f5b16631c9ed79731d1a755832e04419971933f3435ed97d9936",
+  "productionAssetHash": "5b8782d9a80f43e8b32b220c742adb5f2fc643b20e0ac84946f20781d642bdee",
+  "offsets": {
+    "onboarding": {
+      "byteOffset": 0,
+      "count": 500
+    },
+    "easy": {
+      "byteOffset": 2000,
+      "count": 13167
+    },
+    "medium": {
+      "byteOffset": 54668,
+      "count": 15361
+    },
+    "hard": {
+      "byteOffset": 116112,
+      "count": 10972
+    },
+    "daily": {
+      "byteOffset": 160000,
+      "count": 7305
+    }
+  }
+}

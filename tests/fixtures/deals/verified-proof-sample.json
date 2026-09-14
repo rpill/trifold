@@ -1,0 +1,5675 @@
+[
+  {
+    "status": "SOLVED",
+    "seed": 1,
+    "nodes": 4467,
+    "proof": [
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 4,
+          "cardId": "bamboo-2"
+        },
+        "target": {
+          "zone": "foundation",
+          "suit": "bamboo"
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 4,
+          "cardId": "bamboo-3"
+        },
+        "target": {
+          "zone": "foundation",
+          "suit": "bamboo"
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "characters-4"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 2,
+          "cardId": "characters-2"
+        },
+        "target": {
+          "zone": "foundation",
+          "suit": "characters"
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 1,
+          "cardId": "characters-3"
+        },
+        "target": {
+          "zone": "foundation",
+          "suit": "characters"
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 0,
+          "cardId": "characters-4"
+        },
+        "target": {
+          "zone": "foundation",
+          "suit": "characters"
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 4,
+          "cardId": "coins-8"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 3
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 4,
+          "cardId": "characters-5"
+        },
+        "target": {
+          "zone": "foundation",
+          "suit": "characters"
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "characters-6"
+        },
+        "target": {
+          "zone": "foundation",
+          "suit": "characters"
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 4,
+          "cardId": "dragon-red-1"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "bamboo-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 7
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 1,
+          "cardId": "dragon-red-2"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 0,
+          "cardId": "dragon-red-1"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 1,
+          "cardId": "dragon-green-3"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 1,
+          "cardId": "bamboo-4"
+        },
+        "target": {
+          "zone": "foundation",
+          "suit": "bamboo"
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 0,
+          "cardId": "dragon-green-3"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 4
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "dragon-red-1"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 1,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 1,
+          "cardId": "dragon-red-3"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 0,
+          "cardId": "dragon-red-1"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 1,
+          "cardId": "dragon-red-3"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 1,
+          "cardId": "dragon-red-1"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 0,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "dragon-red-3"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 1,
+          "cardId": "dragon-red-1"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 1,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 2,
+          "cardId": "dragon-red-2"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "dragon-red-1"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 0,
+          "cardId": "dragon-red-3"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 1,
+          "cardId": "dragon-red-2"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 1,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "dragon-red-3"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 0,
+          "cardId": "dragon-red-2"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 1,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 1,
+          "cardId": "dragon-red-3"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "dragon-red-2"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 0,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 1,
+          "cardId": "dragon-red-3"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 1,
+          "cardId": "dragon-red-2"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 4,
+          "cardId": "dragon-green-3"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 0,
+          "cardId": "dragon-red-3"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 4
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 2,
+          "cardId": "dragon-red-1"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 1,
+          "cardId": "dragon-red-2"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 0,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "dragon-red-1"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 2,
+          "cardId": "dragon-red-2"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 1,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 0,
+          "cardId": "dragon-red-1"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "dragon-red-2"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 1,
+          "cardId": "dragon-green-3"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 1,
+          "cardId": "dragon-red-1"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 0,
+          "cardId": "dragon-red-2"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "dragon-green-3"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 1,
+          "cardId": "dragon-red-1"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 1,
+          "cardId": "dragon-red-2"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 0,
+          "cardId": "dragon-green-3"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "dragon-red-1"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 1,
+          "cardId": "dragon-red-2"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 4,
+          "cardId": "dragon-red-3"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 0,
+          "cardId": "dragon-red-1"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 4
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "dragon-red-2"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 2,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 1,
+          "cardId": "dragon-green-3"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 0,
+          "cardId": "dragon-red-2"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 1,
+          "cardId": "dragon-red-3"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 1,
+          "cardId": "dragon-red-2"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 0,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "dragon-red-3"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 1,
+          "cardId": "dragon-red-2"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 1,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 0,
+          "cardId": "dragon-red-3"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "dragon-red-2"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 1,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 4,
+          "cardId": "dragon-red-1"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 0,
+          "cardId": "dragon-red-2"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 4
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 2,
+          "cardId": "dragon-green-3"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 1,
+          "cardId": "dragon-red-3"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 0,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "dragon-green-3"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 1,
+          "cardId": "dragon-red-1"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 1,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 0,
+          "cardId": "dragon-green-3"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "dragon-red-1"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 1,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 1,
+          "cardId": "dragon-green-3"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 0,
+          "cardId": "dragon-red-1"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 1,
+          "cardId": "dragon-green-3"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 4,
+          "cardId": "dragon-red-2"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 0,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 4
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "dragon-green-3"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 2,
+          "cardId": "dragon-red-3"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 1,
+          "cardId": "dragon-red-1"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 1,
+          "cardId": "dragon-red-2"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "dragon-red-3"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 2,
+          "cardId": "dragon-red-1"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 1,
+          "cardId": "dragon-red-2"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 1,
+          "cardId": "dragon-red-3"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "dragon-red-1"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 2,
+          "cardId": "dragon-red-2"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 2,
+          "cardId": "dragon-white-4"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 2,
+          "cardId": "coins-4"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 7
+        }
+      },
+      {
+        "kind": "collect-dragons",
+        "family": "red"
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 0,
+          "cardId": "dragon-green-3"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 2,
+          "cardId": "coins-9"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 2,
+          "cardId": "dragon-white-4"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "dragon-green-3"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 0,
+          "cardId": "coins-9"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 1,
+          "cardId": "dragon-white-4"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 2,
+          "cardId": "dragon-green-3"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "coins-9"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 0,
+          "cardId": "dragon-white-4"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 1,
+          "cardId": "dragon-green-3"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 2,
+          "cardId": "coins-9"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 4,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 0,
+          "cardId": "dragon-green-3"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "dragon-white-4"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "coins-8"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 0,
+          "cardId": "dragon-white-4"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 4
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "coins-8"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 2,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 1,
+          "cardId": "coins-9"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 0,
+          "cardId": "coins-8"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 1,
+          "cardId": "coins-8"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 3
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 2,
+          "cardId": "coins-9"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 2,
+          "cardId": "dragon-green-3"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "coins-8"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 0,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "coins-9"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 2,
+          "cardId": "dragon-green-3"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 1,
+          "cardId": "coins-8"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 0,
+          "cardId": "coins-9"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "dragon-green-3"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 2,
+          "cardId": "coins-8"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 1,
+          "cardId": "coins-9"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 5,
+          "cardId": "dragon-white-3"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "coins-8"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 3
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 0,
+          "cardId": "dragon-green-3"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 1,
+          "cardId": "dragon-white-3"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 2,
+          "cardId": "coins-9"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "dragon-green-3"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 0,
+          "cardId": "dragon-white-3"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 1,
+          "cardId": "coins-9"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 2,
+          "cardId": "dragon-green-3"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "dragon-white-3"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 0,
+          "cardId": "coins-9"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 1,
+          "cardId": "dragon-green-3"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 2,
+          "cardId": "dragon-white-3"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 2,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 0,
+          "cardId": "dragon-green-3"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 1,
+          "cardId": "dragon-white-3"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 5,
+          "cardId": "dragon-white-1"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 5,
+          "cardId": "characters-8"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 2,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 5
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 1,
+          "cardId": "dragon-white-1"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 0,
+          "cardId": "dragon-white-3"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 2,
+          "cardId": "dragon-green-3"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 2,
+          "cardId": "dragon-white-1"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 1,
+          "cardId": "dragon-white-3"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 0,
+          "cardId": "dragon-green-3"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 2,
+          "cardId": "dragon-white-1"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 2,
+          "cardId": "dragon-white-3"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 1,
+          "cardId": "dragon-green-3"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 0,
+          "cardId": "dragon-white-1"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 2,
+          "cardId": "dragon-white-3"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "bamboo-9"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 5,
+          "cardId": "bamboo-6"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 3
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "coins-7"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 0,
+          "cardId": "dragon-white-3"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 5
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 1,
+          "cardId": "dragon-white-1"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 2,
+          "cardId": "dragon-green-3"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 4,
+          "cardId": "dragon-white-4"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 0,
+          "cardId": "dragon-white-1"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 4
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 1,
+          "cardId": "dragon-green-3"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 2,
+          "cardId": "dragon-white-4"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 4,
+          "cardId": "dragon-white-1"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 0,
+          "cardId": "dragon-green-3"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 4
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 1,
+          "cardId": "dragon-white-4"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 2,
+          "cardId": "dragon-white-1"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 4,
+          "cardId": "dragon-green-3"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "dragon-green-4"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 4
+        }
+      },
+      {
+        "kind": "collect-dragons",
+        "family": "green"
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 2,
+          "cardId": "coins-8"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 3
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "characters-8"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 6,
+          "cardId": "bamboo-7"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 3
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 6,
+          "cardId": "characters-7"
+        },
+        "target": {
+          "zone": "foundation",
+          "suit": "characters"
+        }
+      },
+      {
+        "kind": "collect-dragons",
+        "family": "white"
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 2,
+          "cardId": "characters-8"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "coins-8"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 7,
+          "cardId": "coins-6"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "coins-7"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 7
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "characters-8"
+        },
+        "target": {
+          "zone": "foundation",
+          "suit": "characters"
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "characters-9"
+        },
+        "target": {
+          "zone": "foundation",
+          "suit": "characters"
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 7,
+          "cardId": "bamboo-8"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 7,
+          "cardId": "coins-3"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 1
+        }
+      }
+    ]
+  },
+  {
+    "status": "SOLVED",
+    "seed": 2,
+    "nodes": 1278,
+    "proof": [
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 2,
+          "cardId": "characters-4"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "bamboo-6"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 5
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "coins-6"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 2,
+          "cardId": "characters-8"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 2,
+          "cardId": "characters-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 5
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 6,
+          "cardId": "coins-4"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 5
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 6,
+          "cardId": "bamboo-3"
+        },
+        "target": {
+          "zone": "foundation",
+          "suit": "bamboo"
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 6,
+          "cardId": "characters-3"
+        },
+        "target": {
+          "zone": "foundation",
+          "suit": "characters"
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 0,
+          "cardId": "characters-4"
+        },
+        "target": {
+          "zone": "foundation",
+          "suit": "characters"
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 2,
+          "cardId": "dragon-white-2"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 1,
+          "cardId": "coins-6"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 6,
+          "cardId": "dragon-green-1"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 5,
+          "cardId": "characters-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 0,
+          "cardId": "dragon-white-2"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 6
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 2,
+          "cardId": "characters-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 5
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 2,
+          "cardId": "coins-6"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 1,
+          "cardId": "dragon-green-1"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 6,
+          "cardId": "dragon-white-2"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 0,
+          "cardId": "coins-6"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 6
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 2,
+          "cardId": "dragon-green-1"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 5,
+          "cardId": "characters-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 6
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 0,
+          "cardId": "dragon-green-1"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "dragon-green-4"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 2,
+          "cardId": "characters-8"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 3
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 2,
+          "cardId": "dragon-green-1"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 6,
+          "cardId": "characters-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 5
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 0,
+          "cardId": "dragon-green-4"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 6,
+          "cardId": "coins-6"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 1,
+          "cardId": "dragon-white-2"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 6
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 2,
+          "cardId": "dragon-green-4"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 0,
+          "cardId": "coins-6"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 6,
+          "cardId": "dragon-white-2"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 5,
+          "cardId": "characters-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 0,
+          "cardId": "dragon-white-2"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 6
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 4,
+          "cardId": "dragon-green-3"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 0
+        }
+      },
+      {
+        "kind": "collect-dragons",
+        "family": "green"
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 6,
+          "cardId": "dragon-white-2"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 2,
+          "cardId": "characters-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 5
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 2,
+          "cardId": "coins-6"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 4,
+          "cardId": "coins-7"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 3
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 5,
+          "cardId": "bamboo-6"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 3
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 2,
+          "cardId": "coins-6"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 5
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "characters-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 5
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "dragon-white-4"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 5,
+          "cardId": "characters-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 3
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 1,
+          "cardId": "dragon-white-2"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "dragon-red-4"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "characters-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 5
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 1,
+          "cardId": "dragon-red-4"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 1,
+          "cardId": "dragon-red-3"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 1,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 3
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 7
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 5,
+          "cardId": "characters-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 3
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 1,
+          "cardId": "dragon-red-3"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 6
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "dragon-red-4"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "characters-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 5
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 7,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 3
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 1,
+          "cardId": "dragon-red-4"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 2,
+          "cardId": "dragon-white-2"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 7
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 5,
+          "cardId": "characters-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 3
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 2,
+          "cardId": "dragon-white-4"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "dragon-red-4"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "characters-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 5
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 7,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 3
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 1,
+          "cardId": "dragon-white-2"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 2,
+          "cardId": "dragon-white-4"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 7
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 5,
+          "cardId": "characters-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 3
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 1,
+          "cardId": "dragon-white-4"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 6,
+          "cardId": "dragon-red-3"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "characters-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 5
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 7,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 3
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 2,
+          "cardId": "dragon-red-4"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 6
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "dragon-white-2"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 7
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 5,
+          "cardId": "characters-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 3
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 1,
+          "cardId": "dragon-red-3"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 2,
+          "cardId": "dragon-white-4"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "characters-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 5
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 7,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 3
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 1,
+          "cardId": "dragon-white-4"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 6,
+          "cardId": "dragon-red-4"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 7
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 5,
+          "cardId": "characters-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 3
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 2,
+          "cardId": "dragon-white-2"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 6
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "dragon-red-3"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "characters-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 5
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 7,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 3
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 1,
+          "cardId": "dragon-red-4"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 2,
+          "cardId": "dragon-white-4"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 7
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 5,
+          "cardId": "characters-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 3
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 1,
+          "cardId": "dragon-white-4"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 6,
+          "cardId": "dragon-white-2"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "characters-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 5
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 7,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 3
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 2,
+          "cardId": "dragon-red-3"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 6
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 7
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 4,
+          "cardId": "dragon-red-1"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 5,
+          "cardId": "characters-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 3
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 5,
+          "cardId": "coins-6"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 4
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "characters-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 4
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "bamboo-6"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 5
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 4,
+          "cardId": "characters-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 5
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 7,
+          "cardId": "characters-6"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 3
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 4,
+          "cardId": "bamboo-7"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 7
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 7,
+          "cardId": "coins-8"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 4
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 5,
+          "cardId": "characters-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 4
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 5
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 1,
+          "cardId": "dragon-white-2"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 7
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "dragon-red-4"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 5,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 3
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 4,
+          "cardId": "characters-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 5
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 1,
+          "cardId": "dragon-red-4"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 2,
+          "cardId": "dragon-white-4"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 5,
+          "cardId": "characters-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 4
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 5
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 2,
+          "cardId": "dragon-red-1"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "dragon-red-4"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 5,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 3
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 4,
+          "cardId": "characters-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 5
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 1,
+          "cardId": "dragon-white-4"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 2,
+          "cardId": "dragon-red-1"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 5,
+          "cardId": "characters-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 4
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 5
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 1,
+          "cardId": "dragon-red-1"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 6,
+          "cardId": "dragon-red-3"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 5,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 3
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 4,
+          "cardId": "characters-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 5
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 2,
+          "cardId": "dragon-red-4"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 6
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "dragon-white-4"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 5,
+          "cardId": "characters-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 4
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 5
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 1,
+          "cardId": "dragon-red-3"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 2,
+          "cardId": "dragon-red-1"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 5,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 3
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 4,
+          "cardId": "characters-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 5
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 1,
+          "cardId": "dragon-red-1"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 6,
+          "cardId": "dragon-red-4"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 5,
+          "cardId": "characters-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 4
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 5
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 2,
+          "cardId": "dragon-white-4"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 6
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "dragon-red-3"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 5,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 3
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 4,
+          "cardId": "characters-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 5
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 1,
+          "cardId": "dragon-red-4"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 2,
+          "cardId": "dragon-red-1"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 5,
+          "cardId": "characters-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 4
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 5
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 1,
+          "cardId": "dragon-red-1"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 6,
+          "cardId": "dragon-white-4"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 5,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 3
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 4,
+          "cardId": "characters-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 5
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 2,
+          "cardId": "dragon-red-3"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 6
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 7,
+          "cardId": "dragon-white-2"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 5,
+          "cardId": "characters-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 4
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 5
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 1,
+          "cardId": "dragon-white-4"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 7
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "dragon-red-4"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 5,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 3
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 4,
+          "cardId": "characters-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 5
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 1,
+          "cardId": "dragon-red-4"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 2,
+          "cardId": "dragon-red-1"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 5,
+          "cardId": "characters-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 4
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 5
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 2,
+          "cardId": "dragon-white-2"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 5,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 3
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 4,
+          "cardId": "characters-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 5
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 1,
+          "cardId": "dragon-white-3"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "coins-7"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 4,
+          "cardId": "bamboo-7"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 3
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 5,
+          "cardId": "characters-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 3
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 1,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 5
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "bamboo-7"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 4
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 1,
+          "cardId": "coins-7"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 3
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 5,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 3
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 5,
+          "cardId": "characters-7"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 1
+        }
+      },
+      {
+        "kind": "collect-dragons",
+        "family": "red"
+      },
+      {
+        "kind": "collect-dragons",
+        "family": "white"
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 1,
+          "cardId": "bamboo-8"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 5
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 1,
+          "cardId": "bamboo-4"
+        },
+        "target": {
+          "zone": "foundation",
+          "suit": "bamboo"
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 5
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "characters-6"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 5,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 4,
+          "cardId": "characters-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 5
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "characters-6"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 3
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 5,
+          "cardId": "characters-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 4
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "characters-6"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 4,
+          "cardId": "characters-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 5
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 5,
+          "cardId": "bamboo-6"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 3
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "characters-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 4
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 1,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 3
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 4,
+          "cardId": "coins-6"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 5
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 1,
+          "cardId": "characters-6"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 4
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 4
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 5,
+          "cardId": "characters-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 3
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "coins-4"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "characters-5"
+        },
+        "target": {
+          "zone": "foundation",
+          "suit": "characters"
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 4,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 3
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 4,
+          "cardId": "characters-6"
+        },
+        "target": {
+          "zone": "foundation",
+          "suit": "characters"
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 5,
+          "cardId": "coins-6"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 4
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 5,
+          "cardId": "characters-7"
+        },
+        "target": {
+          "zone": "foundation",
+          "suit": "characters"
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "coins-7"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 5
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "characters-8"
+        },
+        "target": {
+          "zone": "foundation",
+          "suit": "characters"
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 4,
+          "cardId": "coins-8"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 3
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "coins-6"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "bamboo-7"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 1,
+          "cardId": "coins-6"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "coins-8"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 2,
+          "cardId": "coins-6"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 4
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 2,
+          "cardId": "bamboo-7"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "bamboo-9"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "characters-9"
+        },
+        "target": {
+          "zone": "foundation",
+          "suit": "characters"
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "bamboo-5"
+        },
+        "target": {
+          "zone": "foundation",
+          "suit": "bamboo"
+        }
+      }
+    ]
+  },
+  {
+    "status": "SOLVED",
+    "seed": 3,
+    "nodes": 83,
+    "proof": [
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 2,
+          "cardId": "characters-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 2,
+          "cardId": "bamboo-9"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 2,
+          "cardId": "bamboo-3"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "dragon-white-2"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 0,
+          "cardId": "bamboo-9"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "coins-8"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "dragon-red-4"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 1,
+          "cardId": "bamboo-3"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "dragon-green-1"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "characters-2"
+        },
+        "target": {
+          "zone": "foundation",
+          "suit": "characters"
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 6,
+          "cardId": "characters-3"
+        },
+        "target": {
+          "zone": "foundation",
+          "suit": "characters"
+        }
+      },
+      {
+        "kind": "collect-dragons",
+        "family": "red"
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "characters-4"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 4
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 1,
+          "cardId": "coins-6"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 6
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 1,
+          "cardId": "bamboo-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 5
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 4,
+          "cardId": "characters-4"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 5
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 5,
+          "cardId": "characters-6"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 7
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 5,
+          "cardId": "coins-4"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 6
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 6,
+          "cardId": "characters-7"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 7,
+          "cardId": "bamboo-3"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 7,
+          "cardId": "characters-4"
+        },
+        "target": {
+          "zone": "foundation",
+          "suit": "characters"
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 2,
+          "cardId": "coins-4"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 7
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 2,
+          "cardId": "characters-5"
+        },
+        "target": {
+          "zone": "foundation",
+          "suit": "characters"
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 7,
+          "cardId": "bamboo-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 7,
+          "cardId": "characters-6"
+        },
+        "target": {
+          "zone": "foundation",
+          "suit": "characters"
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 2,
+          "cardId": "coins-6"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 7
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 2,
+          "cardId": "characters-7"
+        },
+        "target": {
+          "zone": "foundation",
+          "suit": "characters"
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 7,
+          "cardId": "bamboo-7"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 1,
+          "cardId": "dragon-green-1"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "dragon-white-1"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 1
+        }
+      },
+      {
+        "kind": "collect-dragons",
+        "family": "white"
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "characters-8"
+        },
+        "target": {
+          "zone": "foundation",
+          "suit": "characters"
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 7,
+          "cardId": "characters-9"
+        },
+        "target": {
+          "zone": "foundation",
+          "suit": "characters"
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 6,
+          "cardId": "dragon-green-2"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 2,
+          "cardId": "bamboo-3"
+        },
+        "target": {
+          "zone": "foundation",
+          "suit": "bamboo"
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 2,
+          "cardId": "dragon-green-2"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 3
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "dragon-green-1"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 1,
+          "cardId": "dragon-green-3"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "free-cell",
+          "cell": 2,
+          "cardId": "dragon-green-1"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 6
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 0,
+          "cardId": "dragon-green-3"
+        },
+        "target": {
+          "zone": "free-cell",
+          "cell": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 1,
+          "cardId": "coins-3"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 0
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 4,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 4,
+          "cardId": "bamboo-4"
+        },
+        "target": {
+          "zone": "foundation",
+          "suit": "bamboo"
+        }
+      },
+      {
+        "kind": "collect-dragons",
+        "family": "green"
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 1,
+          "cardId": "bamboo-6"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 4
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 2,
+          "cardId": "coins-4"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 1
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 2,
+          "cardId": "bamboo-5"
+        },
+        "target": {
+          "zone": "foundation",
+          "suit": "bamboo"
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 2,
+          "cardId": "coins-6"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 3
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 2,
+          "cardId": "bamboo-7"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 6
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "coins-6"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 6
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 2,
+          "cardId": "coins-8"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 3
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 6,
+          "cardId": "bamboo-7"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 3
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "coins-6"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 6
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 4,
+          "cardId": "coins-5"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 7
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 4,
+          "cardId": "bamboo-6"
+        },
+        "target": {
+          "zone": "foundation",
+          "suit": "bamboo"
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "bamboo-7"
+        },
+        "target": {
+          "zone": "foundation",
+          "suit": "bamboo"
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 3,
+          "cardId": "coins-8"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 2
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 5,
+          "cardId": "coins-9"
+        },
+        "target": {
+          "zone": "tableau",
+          "column": 3
+        }
+      },
+      {
+        "kind": "move",
+        "source": {
+          "zone": "tableau",
+          "column": 5,
+          "cardId": "bamboo-8"
+        },
+        "target": {
+          "zone": "foundation",
+          "suit": "bamboo"
+        }
+      }
+    ]
+  }
+]
