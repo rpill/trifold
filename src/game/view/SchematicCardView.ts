@@ -1,6 +1,23 @@
 import Phaser from 'phaser';
 import { getCard } from '../model/TrifoldRules.ts';
 import type { CardId, DragonFamily, NumericSuit } from '../model/types.ts';
+import type { CardBackStyle } from '../../theme/CardBackStyle.ts';
+import {
+  cardFaceDensityForRenderScale,
+  cardFaceTextureKey,
+  dragonFaceKey,
+  flowerFaceKey,
+  numericFaceKey,
+} from './CardFaceAssets.ts';
+
+
+const DEFAULT_CARD_BACK_STYLE: CardBackStyle = {
+  paper: 0xe8e2cf,
+  edge: 0x31443b,
+  innerEdge: 0x6f8b7e,
+  patternA: 0x88a698,
+  patternB: 0xeef1ea,
+};
 
 interface CardPalette {
   readonly primary: string;
@@ -38,7 +55,7 @@ function dragonPalette(family: DragonFamily): CardPalette {
 }
 
 function dragonAbbreviation(family: DragonFamily): string {
-  return family === 'red' ? 'RD' : family === 'green' ? 'GD' : 'WD';
+  return family === 'red' ? 'RD' : family === 'green' ? 'GD' : 'BD';
 }
 
 function faceSpec(cardId: CardId): CardFaceSpec {
@@ -83,6 +100,7 @@ export function drawSchematicCardBack(
   width: number,
   height: number,
   edgeOnly = false,
+  style: CardBackStyle = DEFAULT_CARD_BACK_STYLE,
 ): void {
   const radius = Math.max(3, Math.round(Math.min(width, height) * 0.06));
   const border = Math.max(1, width * 0.02);
@@ -90,9 +108,9 @@ export function drawSchematicCardBack(
   const innerInset = outerInset + Math.max(3, width * 0.045);
   const patternCell = Math.max(4, Math.round(width * 0.075));
 
-  surface.fillStyle(edgeOnly ? 0xe2dbc7 : 0xe8e2cf, 1);
+  surface.fillStyle(edgeOnly ? 0xe2dbc7 : style.paper, 1);
   surface.fillRoundedRect(x, y, width, height, radius);
-  surface.lineStyle(border, edgeOnly ? 0x7f7a6f : 0x31443b, 1);
+  surface.lineStyle(border, edgeOnly ? 0x7f7a6f : style.edge, 1);
   surface.strokeRoundedRect(x, y, width, height, radius);
 
   if (edgeOnly) {
@@ -107,7 +125,7 @@ export function drawSchematicCardBack(
     return;
   }
 
-  surface.lineStyle(Math.max(1, border * 0.75), 0x6f8b7e, 1);
+  surface.lineStyle(Math.max(1, border * 0.75), style.innerEdge, 1);
   surface.strokeRoundedRect(
     x + outerInset,
     y + outerInset,
@@ -121,7 +139,7 @@ export function drawSchematicCardBack(
   const rows = Math.max(4, Math.floor(patternHeight / patternCell));
   for (let row = 0; row < rows; row += 1) {
     for (let column = 0; column < columns; column += 1) {
-      surface.fillStyle((row + column) % 2 === 0 ? 0x88a698 : 0xeef1ea, 1);
+      surface.fillStyle((row + column) % 2 === 0 ? style.patternA : style.patternB, 1);
       surface.fillRect(
         x + innerInset + column * patternCell,
         y + innerInset + row * patternCell,
@@ -130,7 +148,7 @@ export function drawSchematicCardBack(
       );
     }
   }
-  surface.lineStyle(Math.max(1, border * 0.55), 0x6f8b7e, 1);
+  surface.lineStyle(Math.max(1, border * 0.55), style.innerEdge, 1);
   surface.strokeRect(x + innerInset, y + innerInset, columns * patternCell, rows * patternCell);
 }
 
@@ -139,27 +157,50 @@ export class SchematicCardView {
   readonly input: Phaser.GameObjects.Zone;
   private readonly scene: Phaser.Scene;
   private readonly surface: Phaser.GameObjects.Graphics;
+  private readonly faceImage: Phaser.GameObjects.Image | null;
+  private readonly faceBaseKey: string | null;
   private readonly topLeftRank: Phaser.GameObjects.Text;
   private readonly topLeftKind: Phaser.GameObjects.Text;
   private readonly centerLabel: Phaser.GameObjects.Text;
   private readonly bottomRightRank: Phaser.GameObjects.Text;
   private readonly bottomRightKind: Phaser.GameObjects.Text;
   private readonly palette: CardPalette;
+  private readonly hasCustomFace: boolean;
   private width: number;
   private height: number;
   private x = 0;
   private y = 0;
   private depth = 0;
   private faceDown = false;
+  private visible = true;
+  private cardBackStyle: CardBackStyle;
 
-  constructor(scene: Phaser.Scene, cardId: CardId, width: number, height: number) {
+  constructor(scene: Phaser.Scene, cardId: CardId, width: number, height: number, cardBackStyle: CardBackStyle = DEFAULT_CARD_BACK_STYLE) {
     this.scene = scene;
     this.cardId = cardId;
     this.width = width;
     this.height = height;
+    this.cardBackStyle = cardBackStyle;
     const spec = faceSpec(cardId);
     this.palette = spec.palette;
     this.surface = scene.add.graphics();
+    const card = getCard(cardId);
+    this.faceBaseKey = card.kind === 'dragon'
+      ? dragonFaceKey(card.family)
+      : card.kind === 'flower'
+        ? flowerFaceKey()
+        : card.kind === 'number'
+          ? numericFaceKey(card.suit, card.rank)
+          : null;
+    const initialRenderScale = this.currentRenderScale();
+    this.faceImage = this.faceBaseKey === null
+      ? null
+      : scene.add.image(
+        0,
+        0,
+        cardFaceTextureKey(this.faceBaseKey, cardFaceDensityForRenderScale(initialRenderScale)),
+      ).setOrigin(0);
+    this.hasCustomFace = this.faceImage !== null;
     this.topLeftRank = scene.add.text(0, 0, spec.topLeftRank, {
       color: spec.palette.primary,
       fontFamily: 'system-ui, sans-serif',
@@ -211,6 +252,12 @@ export class SchematicCardView {
     this.centerLabel.setFontSize(Math.max(18, Math.round(width * 0.34)));
     this.bottomRightRank.setFontSize(Math.max(9, Math.round(width * 0.12)));
     this.bottomRightKind.setFontSize(Math.max(0, Math.round(width * 0.07)));
+    if (this.faceImage && this.faceBaseKey) {
+      const density = cardFaceDensityForRenderScale(this.currentRenderScale());
+      this.faceImage
+        .setTexture(cardFaceTextureKey(this.faceBaseKey, density))
+        .setDisplaySize(width, height);
+    }
     this.renderSurface();
     this.setPosition(this.x, this.y);
     this.setDepth(this.depth);
@@ -221,6 +268,7 @@ export class SchematicCardView {
     this.y = y;
     this.input.setPosition(x, y);
     this.surface.setPosition(x, y);
+    this.faceImage?.setPosition(x, y);
     this.topLeftRank.setPosition(x + this.width * 0.08, y + this.height * 0.11);
     this.topLeftKind.setPosition(x + this.width * 0.24, y + this.height * 0.11);
     this.centerLabel.setPosition(x + this.width / 2, y + this.height * 0.50);
@@ -231,6 +279,7 @@ export class SchematicCardView {
   setDepth(depth: number): void {
     this.depth = depth;
     this.surface.setDepth(depth);
+    this.faceImage?.setDepth(depth);
     this.topLeftRank.setDepth(depth + 0.1);
     this.topLeftKind.setDepth(depth + 0.1);
     this.centerLabel.setDepth(depth + 0.1);
@@ -240,16 +289,25 @@ export class SchematicCardView {
   }
 
   setVisible(visible: boolean): void {
-    this.surface.setVisible(visible);
-    for (const faceText of this.faceTexts()) faceText.setVisible(visible && !this.faceDown);
-    this.input.setVisible(visible).setActive(visible);
+    this.visible = visible;
+    this.applyVisibility();
+  }
+
+  setCardBackStyle(style: CardBackStyle): void {
+    this.cardBackStyle = style;
+    if (this.faceDown) this.renderSurface();
   }
 
   setFaceDown(faceDown: boolean): void {
     if (this.faceDown === faceDown) return;
     this.faceDown = faceDown;
     this.renderSurface();
-    for (const faceText of this.faceTexts()) faceText.setVisible(!faceDown && this.surface.visible);
+    this.applyVisibility();
+  }
+
+  private currentRenderScale(): number {
+    const zoom = this.scene.scale.zoom;
+    return zoom > 0 ? 1 / zoom : 1;
   }
 
   private faceTexts(): readonly Phaser.GameObjects.Text[] {
@@ -269,7 +327,13 @@ export class SchematicCardView {
     this.surface.clear();
 
     if (this.faceDown) {
-      drawSchematicCardBack(this.surface, 0, 0, width, height, false);
+      drawSchematicCardBack(this.surface, 0, 0, width, height, false, this.cardBackStyle);
+      this.applyVisibility();
+      return;
+    }
+
+    if (this.hasCustomFace) {
+      this.applyVisibility();
       return;
     }
 
@@ -285,11 +349,24 @@ export class SchematicCardView {
       height - Math.max(4, width * 0.04),
       Math.max(2, radius * 0.65),
     );
+    this.applyVisibility();
+  }
+
+  private applyVisibility(): void {
+    const showCustomFace = this.visible && !this.faceDown && this.hasCustomFace;
+    const showSurface = this.visible && (this.faceDown || !this.hasCustomFace);
+    const showText = this.visible && !this.faceDown && !this.hasCustomFace;
+
+    this.surface.setVisible(showSurface);
+    this.faceImage?.setVisible(showCustomFace);
+    for (const faceText of this.faceTexts()) faceText.setVisible(showText);
+    this.input.setVisible(this.visible).setActive(this.visible);
   }
 
   destroy(): void {
     this.input.destroy();
     this.surface.destroy();
+    this.faceImage?.destroy();
     this.topLeftRank.destroy();
     this.topLeftKind.destroy();
     this.centerLabel.destroy();

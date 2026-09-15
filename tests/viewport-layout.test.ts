@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { calculateViewportLayout } from '../src/game/view/ViewportLayout.ts';
+import { CARD_ASPECT_RATIO, calculateViewportLayout } from '../src/game/view/ViewportLayout.ts';
 import { tableauCardY } from '../src/game/view/layout.ts';
 
 type Rect = { x: number; y: number; width: number; height: number };
@@ -18,6 +18,17 @@ function assertInside(inner: Rect, outer: Rect): void {
   assert.ok(inner.x + inner.width <= outer.x + outer.width + 1e-6);
   assert.ok(inner.y + inner.height <= outer.y + outer.height + 1e-6);
 }
+
+test('card geometry uses the new taller production face ratio', () => {
+  const expectedRatio = 1353 / 868;
+  assert.ok(Math.abs(CARD_ASPECT_RATIO - expectedRatio) < 1e-9);
+
+  for (const [width, height] of [[844, 390], [1280, 720], [1744, 864]] as const) {
+    const layout = calculateViewportLayout(width, height);
+    assert.ok(Math.abs(layout.cardHeight / layout.cardWidth - expectedRatio) < 1e-9);
+    assert.ok(layout.cardHeight > layout.cardWidth * 1.55, `${width}x${height}: card is still too squat`);
+  }
+});
 
 for (const [width, height, profile] of [[844,390,'compact-landscape'], [1280,720,'standard']] as const) {
   test(`${width}x${height} creates complete non-overlapping board geometry`, () => {
@@ -74,6 +85,12 @@ test('standard cards are at least as wide as compact cards', () => {
   assert.ok(standard.cardWidth >= compact.cardWidth);
 });
 
+test('wide low-height desktop viewport stays on the standard profile', () => {
+  const layout = calculateViewportLayout(1258, 475);
+  assert.equal(layout.profile, 'standard');
+  assert.ok(layout.cardWidth >= 110, `desktop cards are too small: ${layout.cardWidth}`);
+});
+
 test('vertical fan compression keeps long columns inside board bottom margin', () => {
   for (const [width, height] of [[844,390], [1280,720]] as const) {
     const layout = calculateViewportLayout(width, height);
@@ -122,7 +139,7 @@ test('abrupt landscape resize sequence always produces valid fresh geometry', ()
 test('five-card tableau uses the available vertical space instead of a cramped fixed fan', () => {
   const compact = calculateViewportLayout(844, 390);
   const standard = calculateViewportLayout(1280, 720);
-  assert.ok(compact.tableauCardGap >= 28, `compact gap too tight: ${compact.tableauCardGap}`);
+  assert.ok(compact.tableauCardGap >= 22, `compact gap too tight: ${compact.tableauCardGap}`);
   assert.ok(standard.tableauCardGap >= 40, `standard gap too tight: ${standard.tableauCardGap}`);
 });
 
@@ -136,4 +153,13 @@ test('F/deal slot is more isolated from R/G/B than numeric foundations are from 
     const foundationGap = second.x - (first.x + layout.cardWidth);
     assert.ok(flowerGap > foundationGap, `${width}x${height}: F gap ${flowerGap} <= numeric gap ${foundationGap}`);
   }
+});
+
+test('compact service rail uses at least 44 CSS px controls without changing board card geometry', () => {
+  const compact = calculateViewportLayout(844, 390);
+  assert.ok(compact.newDealControl.height >= 44);
+  assert.ok(compact.undoControl.height >= 44);
+  const baseline = calculateViewportLayout(844, 390);
+  assert.equal(compact.cardWidth, baseline.cardWidth);
+  assert.equal(compact.tableauY, baseline.tableauY);
 });

@@ -1,8 +1,8 @@
 import Phaser from 'phaser';
 import { createDeck } from '../model/cards.ts';
 import { createDeal, getInitialDealSequence } from '../model/deal.ts';
-import { TrifoldGame } from '../model/TrifoldGame.ts';
 import {
+  canCollectDragons,
   canDropInFreeCell,
   canDropOnTableau,
   canMoveToFoundation,
@@ -17,7 +17,9 @@ import type {
   CardSource,
   DragonFamily,
   PlayerCommand,
+  ReadonlyTrifoldState,
   TransactionResult,
+  TrifoldSnapshot,
 } from '../model/types.ts';
 import type { SfxCue } from '../../settings/SfxController.ts';
 import {
@@ -34,6 +36,12 @@ import { tableauCardY } from './layout.ts';
 import { drawSchematicCardBack, SchematicCardView } from './SchematicCardView.ts';
 import { DealStackVisualState } from './DealStackVisualState.ts';
 import type { ViewportLayout } from './ViewportLayout.ts';
+import { ThemeRuntime } from '../../theme/ThemeRuntime.ts';
+
+export interface BoardStateSource {
+  readonly state: ReadonlyTrifoldState;
+  snapshot(): TrifoldSnapshot;
+}
 
 export interface BoardActions {
   readonly perform: (command: PlayerCommand) => TransactionResult | null;
@@ -69,16 +77,18 @@ function membersDepthOffset(cardId: CardId, cardIds: readonly CardId[]): number 
 
 export class TrifoldBoardView {
   private readonly scene: Phaser.Scene;
-  private readonly game: TrifoldGame;
+  private readonly game: BoardStateSource;
   private readonly actions: BoardActions;
   private readonly cards = new Map<CardId, SchematicCardView>();
   private readonly slots: Phaser.GameObjects.Graphics;
   private readonly dealStack: Phaser.GameObjects.Graphics;
+  private readonly hintGraphics: Phaser.GameObjects.Graphics;
   private readonly dealStackVisual = new DealStackVisualState(0);
   private readonly slotLabels: Phaser.GameObjects.Text[] = [];
   private readonly activeTweens = new Set<Phaser.Tweens.Tween>();
   private readonly activeTimers = new Set<Phaser.Time.TimerEvent>();
   private readonly dragDistanceThreshold: number;
+  private readonly theme: ThemeRuntime;
   private layout: ViewportLayout;
   private inputLocked = true;
   private uiPaused = false;
@@ -87,23 +97,28 @@ export class TrifoldBoardView {
   private dragState: DragState | null = null;
   private lastTap: { readonly cardId: CardId; readonly time: number } | null = null;
   private destroyed = false;
+  private hintTween: Phaser.Tweens.Tween | null = null;
+  private tutorialHintActive = false;
 
   constructor(
     scene: Phaser.Scene,
-    game: TrifoldGame,
+    game: BoardStateSource,
     actions: BoardActions,
     layout: ViewportLayout,
+    theme: ThemeRuntime,
   ) {
     this.scene = scene;
     this.game = game;
     this.actions = actions;
     this.layout = layout;
+    this.theme = theme;
     this.dragDistanceThreshold = scene.input.dragDistanceThreshold;
     this.slots = scene.add.graphics().setDepth(2);
     this.dealStack = scene.add.graphics().setDepth(4);
+    this.hintGraphics = scene.add.graphics().setDepth(4500);
 
     for (const card of createDeck()) {
-      const view = new SchematicCardView(scene, card.id, layout.cardWidth, layout.cardHeight);
+      const view = new SchematicCardView(scene, card.id, layout.cardWidth, layout.cardHeight, this.theme.cardBackStyle);
       view.setVisible(false);
       this.cards.set(card.id, view);
       this.installCardInput(card.id, view);
@@ -157,8 +172,20 @@ export class TrifoldBoardView {
     });
   }
 
+  showCurrentState(): void {
+    if (this.destroyed) return;
+    this.cancelAnimations();
+    this.initialDealPending = false;
+    this.dealStackVisual.sync(0);
+    this.updateDealStack();
+    this.syncToState();
+    this.inputLocked = this.uiPaused;
+    this.actions.settled();
+  }
+
   relayout(layout: ViewportLayout): void {
     if (this.destroyed) return;
+    this.clearHint();
     const wasInitialDeal = this.initialDealPending;
     this.cancelAnimations();
     this.dragState = null;
@@ -177,6 +204,7 @@ export class TrifoldBoardView {
 
   requestUndo(): void {
     if (this.inputLocked || this.uiPaused) return;
+    if (!this.tutorialHintActive) this.clearHint();
     const result = this.actions.undo();
     if (!result) return;
     this.dragState = null;
@@ -191,6 +219,7 @@ export class TrifoldBoardView {
 
   collectDragons(family: DragonFamily): void {
     if (this.inputLocked || this.uiPaused) return;
+    if (!this.tutorialHintActive) this.clearHint();
     const result = this.actions.perform({ type: 'collect-dragons', family });
     if (!result) return;
     this.dragState = null;
@@ -217,14 +246,98 @@ export class TrifoldBoardView {
     else if (!this.initialDealPending) this.inputLocked = false;
   }
 
+  showHint(command: PlayerCommand): void {
+    this.showCommandHint(command, 0xf0d778, false);
+  }
+
+  showTutorialHint(command: PlayerCommand): void {
+    this.showCommandHint(command, 0x79c8b5, true);
+  }
+
+  private showCommandHint(command: PlayerCommand, color: number, tutorial: boolean): void {
+    if (this.destroyed) return;
+    this.clearHint();
+    this.tutorialHintActive = tutorial;
+    const lineWidth = Math.max(2, this.layout.cardWidth * 0.035);
+    const radius = Math.max(5, this.layout.cardWidth * 0.07);
+    this.hintGraphics.lineStyle(lineWidth, color, 1);
+    const outline = (x: number, y: number, height = this.layout.cardHeight): void => {
+      this.hintGraphics.strokeRoundedRect(x - lineWidth, y - lineWidth, this.layout.cardWidth + lineWidth * 2, height + lineWidth * 2, radius);
+    };
+    const placements = this.calculatePlacements();
+
+    if (command.type === 'collect-dragons') {
+      const collection = canCollectDragons(this.game.state, command.family);
+      for (const source of collection?.sources ?? []) {
+        const cardId = cardsFromSource(this.game.state, source)[0];
+        const placement = cardId ? placements.get(cardId) : undefined;
+        if (placement) outline(placement.x, placement.y);
+      }
+    } else {
+      const sourceCards = cardsFromSource(this.game.state, command.source);
+      const sourceCard = sourceCards[0];
+      const sourcePlacement = sourceCard ? placements.get(sourceCard) : undefined;
+      if (sourcePlacement) {
+        let sourceHeight = this.layout.cardHeight;
+        if (tutorial && command.source.zone === 'tableau' && sourceCards.length > 1) {
+          const lastSourceCard = sourceCards[sourceCards.length - 1];
+          const lastSourcePlacement = lastSourceCard ? placements.get(lastSourceCard) : undefined;
+          if (lastSourcePlacement) {
+            sourceHeight = lastSourcePlacement.y + this.layout.cardHeight - sourcePlacement.y;
+          }
+        }
+        outline(sourcePlacement.x, sourcePlacement.y, sourceHeight);
+      }
+
+      if (command.target.zone === 'tableau') {
+        const targetCards = this.game.state.tableau[command.target.column] ?? [];
+        const targetY = targetCards.length === 0
+          ? this.layout.tableauY
+          : tableauCardY(this.layout, targetCards.length, targetCards.length - 1);
+        outline(this.layout.tableauX[command.target.column], targetY);
+      } else if (command.target.zone === 'free-cell') {
+        const point = this.layout.freeCells[command.target.cell];
+        if (point) outline(point.x, point.y);
+      } else {
+        const index = command.target.suit === 'coins' ? 0 : command.target.suit === 'bamboo' ? 1 : 2;
+        const point = this.layout.foundations[index];
+        if (point) outline(point.x, point.y);
+      }
+    }
+
+    this.hintTween = this.scene.tweens.add({
+      targets: this.hintGraphics,
+      alpha: { from: 0.45, to: 1 },
+      duration: 480,
+      yoyo: true,
+      repeat: -1,
+    });
+  }
+
+  clearHint(): void {
+    this.tutorialHintActive = false;
+    this.hintTween?.stop();
+    this.hintTween = null;
+    this.hintGraphics.setAlpha(1).clear();
+  }
+
+  refreshTheme(): void {
+    if (this.destroyed) return;
+    for (const view of this.cards.values()) view.setCardBackStyle(this.theme.cardBackStyle);
+    this.redrawSlots();
+    this.updateDealStack();
+  }
+
   destroy(): void {
     if (this.destroyed) return;
     this.destroyed = true;
+    this.clearHint();
     this.cancelAnimations();
     for (const view of this.cards.values()) view.destroy();
     this.cards.clear();
     this.slots.destroy();
     this.dealStack.destroy();
+    this.hintGraphics.destroy();
     for (const label of this.slotLabels) label.destroy();
     this.slotLabels.length = 0;
   }
@@ -242,6 +355,7 @@ export class TrifoldBoardView {
 
   private handlePointerDown(cardId: CardId): void {
     if (this.inputLocked || this.uiPaused) return;
+    if (!this.tutorialHintActive) this.clearHint();
     const placement = this.calculatePlacements().get(cardId);
     if (!placement?.source || !canPickUp(this.game.state, placement.source)) return;
     this.actions.sound('card-touch');
@@ -432,7 +546,7 @@ export class TrifoldBoardView {
   }
 
   private createSlotLabels(): void {
-    for (const text of ['FREE', 'FREE', 'FREE', 'F', 'R', 'G', 'B', 'RD', 'GD', 'WD']) {
+    for (const text of ['FREE', 'FREE', 'FREE', 'F', 'R', 'G', 'B', 'RD', 'GD', 'BD']) {
       this.slotLabels.push(this.scene.add.text(0, 0, text, {
         color: '#a9bbb2',
         fontFamily: 'system-ui, sans-serif',
@@ -449,7 +563,7 @@ export class TrifoldBoardView {
     const tableauSlotAlpha = 0.34;
 
     this.slots.clear();
-    this.slots.lineStyle(lineWidth, 0x8aa095, freeSlotAlpha);
+    this.slots.lineStyle(lineWidth, this.theme.slotPalette.edge, freeSlotAlpha);
     for (const point of this.layout.freeCells) {
       this.slots.strokeRoundedRect(
         point.x,
@@ -460,7 +574,7 @@ export class TrifoldBoardView {
       );
     }
 
-    this.slots.lineStyle(lineWidth, 0x8aa095, foundationSlotAlpha);
+    this.slots.lineStyle(lineWidth, this.theme.slotPalette.edge, foundationSlotAlpha);
     const foundationSlots = [this.layout.flowerFoundation, ...this.layout.foundations];
     for (const point of foundationSlots) {
       this.slots.strokeRoundedRect(
@@ -472,7 +586,7 @@ export class TrifoldBoardView {
       );
     }
 
-    this.slots.lineStyle(lineWidth, 0x8aa095, tableauSlotAlpha);
+    this.slots.lineStyle(lineWidth, this.theme.slotPalette.edge, tableauSlotAlpha);
     for (const x of this.layout.tableauX) {
       this.slots.strokeRoundedRect(
         x,
@@ -483,7 +597,7 @@ export class TrifoldBoardView {
       );
     }
 
-    this.slots.lineStyle(Math.max(1, lineWidth * 0.9), 0x8aa095, 0.5);
+    this.slots.lineStyle(Math.max(1, lineWidth * 0.9), this.theme.slotPalette.edge, 0.5);
     for (const bounds of this.layout.dragonControls) {
       this.slots.strokeRoundedRect(
         bounds.x,
@@ -504,6 +618,7 @@ export class TrifoldBoardView {
           this.layout.cardWidth,
           this.layout.cardHeight,
           false,
+          this.theme.cardBackStyle,
         );
       }
       const label = this.slotLabels[index];
@@ -556,6 +671,7 @@ export class TrifoldBoardView {
         width,
         height,
         !top,
+        this.theme.cardBackStyle,
       );
     });
   }

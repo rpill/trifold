@@ -19,17 +19,16 @@ test('GameScene converts logical viewport geometry to backing-store geometry exa
   }
 });
 
-test('GameScene wires deal source, controls, SFX preload and victory without random production fallback', () => {
+test('GameScene wires StandardSessionController, controls, SFX preload and committed victory flow', () => {
   for (const required of [
-    'DevelopmentDealSource', 'VerifiedCatalogDealSource', 'VerifiedDealCatalog',
-    'Verified deal catalog unavailable', 'startNewDeal', 'requestUndo', 'collectDragons',
+    'StandardSessionController', 'getRuntimeServices', 'GameHud', 'buildGameHudViewModel', 'startNewStandard', 'requestUndo', 'collectDragons',
     'SfxController', 'SFX_ASSETS', 'loaderror', 'missingSfxKeys', 'const sound = this.sound', 'return sound.locked',
-    "this.sfx?.play('victory')", 'isWon', 'Новая раздача', 'Отмена', 'RD', 'GD', 'WD',
+    "this.sfx?.play('victory')", 'session.settleWin', 'RD', 'GD', 'BD',
     "this.createControl(DRAGON_LABELS[family]",
   ]) {
     assert.ok(scene.includes(required), `expected GameScene to include ${required}`);
   }
-  assert.equal(scene.includes('Date.now()'), false);
+  assert.equal(scene.includes('dealSource.nextSeed'), false);
   assert.equal(scene.includes('Math.random()'), false);
 });
 
@@ -50,4 +49,26 @@ test('completed dragon family uses a darker third visual state', () => {
   ]) {
     assert.ok(scene.includes(required), `expected completed dragon styling to include ${required}`);
   }
+});
+
+test('GameScene supports Daily sessions without exposing hints or random Daily seeds', () => {
+  for (const required of [
+    'DailySessionController', "'new-daily'", "'resume-daily'", 'startNewDaily', 'resumeDaily',
+    'buildDailyWinOverlayContent',
+  ]) assert.ok(scene.includes(required), `expected Daily wiring to include ${required}`);
+  assert.equal(scene.includes('getDailySeedByOffset(random'), false);
+});
+
+test('GameScene wires free solver hints only for Standard sessions and disables unavailable hints', () => {
+  for (const required of [
+    'HintWorkerClient', 'HintCoordinator', 'requestHint', 'hintBusy',
+    "runtime.analytics.track('hint_attempt'", "runtime.analytics.track('hint_success'",
+    'this.board?.showHint(command)', 'isUnavailableForCurrentState()',
+  ]) assert.ok(scene.includes(required), `expected Standard hint wiring to include ${required}`);
+  assert.ok(scene.includes('session instanceof DailySessionController'));
+  assert.equal(scene.includes('getRuntimeServices().rewardedAds.available && !this.hintBusy'), false);
+  const coordinator = readFileSync(new URL('../src/meta/hints/HintCoordinator.ts', import.meta.url), 'utf8');
+  assert.ok(coordinator.includes('this.session.markAssisted()'));
+  assert.equal(coordinator.includes('showRewarded'), false, 'Standard hints must not show rewarded ads');
+  assert.equal(coordinator.includes('RewardedAdGateway'), false, 'Standard hints must not depend on ad gateway');
 });

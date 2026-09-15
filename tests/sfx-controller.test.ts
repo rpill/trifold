@@ -38,3 +38,15 @@ test('card-place cycles variants and forwards Cascade volume', () => {
   ]);
   assert.ok(manager.plays.every((p) => p.volume === 0.04));
 });
+
+test('SFX can be disabled and re-enabled without rebuilding the controller', () => {
+  const manager = new FakeSoundManager();
+  manager.existing.add('sfx-button');
+  const sfx = new SfxController(manager);
+  sfx.setEnabled(false);
+  sfx.play('button');
+  assert.equal(manager.plays.length, 0);
+  sfx.setEnabled(true);
+  sfx.play('button');
+  assert.equal(manager.plays.length, 1);
+});

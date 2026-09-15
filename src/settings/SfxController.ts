@@ -46,13 +46,18 @@ interface SoundManagerLike {
 export class SfxController {
   private readonly manager: SoundManagerLike;
   private readonly nextVariant = new Map<SfxCue, number>();
+  private enabled = true;
 
   constructor(manager: SoundManagerLike) {
     this.manager = manager;
   }
 
+  setEnabled(enabled: boolean): void {
+    this.enabled = enabled;
+  }
+
   play(cue: SfxCue): void {
-    if (this.manager.locked === true) return;
+    if (!this.enabled || this.manager.locked === true) return;
     const asset = SFX_ASSETS[cue];
     const index = this.nextVariant.get(cue) ?? 0;
     const key = asset.keys[index % asset.keys.length];

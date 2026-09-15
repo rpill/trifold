@@ -5,6 +5,11 @@ export interface HistoryEntry {
   readonly forwardOperations: readonly CardOperation[];
 }
 
+export interface GameHistorySaveV1 {
+  readonly version: 1;
+  readonly entries: readonly HistoryEntry[];
+}
+
 function cloneSnapshot(snapshot: TrifoldSnapshot): TrifoldSnapshot {
   return {
     seed: snapshot.seed,
@@ -22,6 +27,21 @@ function cloneSnapshot(snapshot: TrifoldSnapshot): TrifoldSnapshot {
   };
 }
 
+function cloneOperation(operation: CardOperation): CardOperation {
+  return {
+    ...operation,
+    from: { ...operation.from },
+    to: { ...operation.to },
+  };
+}
+
+function cloneEntry(entry: HistoryEntry): HistoryEntry {
+  return {
+    before: cloneSnapshot(entry.before),
+    forwardOperations: entry.forwardOperations.map(cloneOperation),
+  };
+}
+
 export class GameHistory {
   private readonly entries: HistoryEntry[] = [];
 
@@ -30,14 +50,7 @@ export class GameHistory {
   }
 
   push(entry: HistoryEntry): void {
-    this.entries.push({
-      before: cloneSnapshot(entry.before),
-      forwardOperations: entry.forwardOperations.map((operation) => ({
-        ...operation,
-        from: { ...operation.from },
-        to: { ...operation.to },
-      })),
-    });
+    this.entries.push(cloneEntry(entry));
   }
 
   pop(): HistoryEntry | null {
@@ -46,5 +59,20 @@ export class GameHistory {
 
   clear(): void {
     this.entries.length = 0;
+  }
+
+  exportSave(): GameHistorySaveV1 {
+    return {
+      version: 1,
+      entries: this.entries.map(cloneEntry),
+    };
+  }
+
+  restore(save: GameHistorySaveV1): void {
+    if (save.version !== 1 || !Array.isArray(save.entries)) {
+      throw new Error('Unsupported game history save version.');
+    }
+    this.clear();
+    for (const entry of save.entries) this.entries.push(cloneEntry(entry));
   }
 }

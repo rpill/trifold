@@ -1,14 +1,8 @@
 import Phaser from 'phaser';
-import { createDeal } from '../model/deal.ts';
-import {
-  DevelopmentDealSource,
-  VerifiedCatalogDealSource,
-  type DealSource,
-} from '../model/DealSource.ts';
-import { TrifoldGame } from '../model/TrifoldGame.ts';
-import { canCollectDragons, isWon } from '../model/TrifoldRules.ts';
-import { VerifiedDealCatalog } from '../model/VerifiedDealCatalog.ts';
+import { canCollectDragons } from '../model/TrifoldRules.ts';
 import type { DragonFamily } from '../model/types.ts';
+import { HintWorkerClient } from '../hints/HintWorkerClient.ts';
+import { HintCoordinator } from '../../meta/hints/HintCoordinator.ts';
 import { TrifoldBoardView } from '../view/TrifoldBoardView.ts';
 import {
   calculateViewportLayout,
@@ -17,20 +11,39 @@ import {
   type SafeAreaInsets,
   type ViewportLayout,
 } from '../view/ViewportLayout.ts';
+import { getRuntimeServices } from '../../meta/RuntimeServices.ts';
+import type { StandardDifficulty } from '../../meta/profile/ProfileTypes.ts';
+import {
+  StandardSessionController,
+  type StandardSessionViewState,
+} from '../../meta/standard/StandardSessionController.ts';
+import type { StandardWinSettlementResult } from '../../meta/standard/StandardWinSettlement.ts';
+import { DailySessionController, type DailySessionViewState } from '../../meta/daily/DailySessionController.ts';
+import type { DailyWinSettlementResult } from '../../meta/daily/DailyWinSettlement.ts';
+import { toLocalDateKey } from '../../meta/daily/DailyDate.ts';
+import { buildStandardWinViewModel, type StandardWinViewModel } from '../../ui/win/StandardWinViewModel.ts';
+import { claimRewardDouble, createRewardDoubleOffer, type RewardDoubleOffer } from '../../meta/economy/RewardDouble.ts';
+import { WinOverlay, buildStandardWinOverlayContent } from '../../ui/win/WinOverlay.ts';
 import { SFX_ASSETS, SfxController } from '../../settings/SfxController.ts';
-
-interface InjectedVerifiedDeals {
-  readonly buffer: ArrayBuffer;
-  readonly manifest: unknown;
-}
-
-declare global {
-  interface Window {
-    __TRIFOLD_VERIFIED_DEALS__?: InjectedVerifiedDeals;
-  }
-}
+import { GameHud } from '../../ui/game/GameHud.ts';
+import { buildGameHudViewModel } from '../../ui/game/GameHudViewModel.ts';
+import { buildDailyWinOverlayContent } from '../../ui/daily/DailyViewModel.ts';
+import { GameplayActivity } from '../../platform/GameplayActivity.ts';
+import { TutorialController } from '../../tutorial/TutorialController.ts';
+import { tutorialText } from '../../tutorial/TutorialText.ts';
+import { tr } from '../../i18n/Localization.ts';
 
 type ControlVariant = 'default' | 'dragon';
+type StandardLaunchMode = 'new-standard' | 'resume-standard' | 'tutorial';
+type DailyLaunchMode = 'new-daily' | 'resume-daily';
+type GameLaunchMode = StandardLaunchMode | DailyLaunchMode;
+type ActiveSession = StandardSessionController | DailySessionController;
+
+interface GameSceneLaunchData {
+  readonly mode?: GameLaunchMode;
+  readonly difficulty?: StandardDifficulty;
+  readonly dailyDateKey?: string;
+}
 
 interface SceneControl {
   readonly zone: Phaser.GameObjects.Zone;
@@ -40,13 +53,15 @@ interface SceneControl {
   readonly variant: ControlVariant;
   enabled: boolean;
   completed: boolean;
+  hinted: boolean;
+  tutorialHinted: boolean;
 }
 
 const DRAGONS: readonly DragonFamily[] = ['red', 'green', 'white'];
 const DRAGON_LABELS: Readonly<Record<DragonFamily, string>> = {
   red: 'RD',
   green: 'GD',
-  white: 'WD',
+  white: 'BD',
 };
 
 function readCssPixels(name: string): number {
@@ -64,24 +79,58 @@ function readSafeAreaInsets(): SafeAreaInsets {
   };
 }
 
+function randomVerifiedIndex(size: number): number {
+  if (!Number.isSafeInteger(size) || size < 1) throw new RangeError('Verified deal pool must be non-empty.');
+  const values = new Uint32Array(1);
+  crypto.getRandomValues(values);
+  return (values[0] ?? 0) % size;
+}
+
+function parseLaunchData(raw: unknown): GameSceneLaunchData {
+  if (typeof raw !== 'object' || raw === null) return {};
+  const value = raw as Record<string, unknown>;
+  const mode = value.mode === 'resume-standard' || value.mode === 'new-standard' || value.mode === 'tutorial'
+    || value.mode === 'resume-daily' || value.mode === 'new-daily' ? value.mode : undefined;
+  const difficulty = value.difficulty === 'easy' || value.difficulty === 'medium' || value.difficulty === 'hard'
+    ? value.difficulty
+    : undefined;
+  const dailyDateKey = typeof value.dailyDateKey === 'string' ? value.dailyDateKey : undefined;
+  return { mode, difficulty, dailyDateKey };
+}
+
+
 export class GameScene extends Phaser.Scene {
-  private gameModel: TrifoldGame | null = null;
+  private launchData: GameSceneLaunchData = {};
+  private session: ActiveSession | null = null;
   private board: TrifoldBoardView | null = null;
-  private dealSource: DealSource | null = null;
-  private currentSeed: number | undefined;
   private sfx: SfxController | null = null;
   private readonly missingSfxKeys = new Set<string>();
   private currentLayout: ViewportLayout | null = null;
-  private newDealControl: SceneControl | null = null;
-  private undoControl: SceneControl | null = null;
+  private gameHud: GameHud | null = null;
+  private currentCoins = 0;
   private readonly dragonControls = new Map<DragonFamily, SceneControl>();
   private boardReady = false;
   private victoryAnnounced = false;
-  private victoryOverlay: Phaser.GameObjects.Container | null = null;
+  private victoryOverlay: WinOverlay | null = null;
   private blockingMessage: Phaser.GameObjects.Text | null = null;
+  private sessionStarting = false;
+  private rewardDoubleClaiming = false;
+  private gameplayActivity: GameplayActivity | null = null;
+  private platformPauseUnsubscribe: (() => void) | null = null;
+  private hintWorker: HintWorkerClient | null = null;
+  private hintCoordinator: HintCoordinator | null = null;
+  private hintBusy = false;
+  private tutorialController: TutorialController | null = null;
+  private tutorialTextObject: Phaser.GameObjects.Text | null = null;
+  private tutorialDragonFamily: DragonFamily | null = null;
+  private sceneGeneration = 0;
 
   constructor() {
     super('GameScene');
+  }
+
+  init(data: unknown): void {
+    this.launchData = parseLaunchData(data);
   }
 
   preload(): void {
@@ -102,7 +151,11 @@ export class GameScene extends Phaser.Scene {
   }
 
   create(): void {
-    this.cameras.main.setBackgroundColor(0x183f2f);
+    const generation = ++this.sceneGeneration;
+    this.sessionStarting = false;
+    const runtime = getRuntimeServices();
+    runtime.theme.setTheme(runtime.repository.current.activeThemeId);
+    this.cameras.main.setBackgroundColor(runtime.theme.boardSurfaceColor);
     this.input.dragDistanceThreshold = 7;
     const sound = this.sound;
     this.sfx = new SfxController({
@@ -110,35 +163,78 @@ export class GameScene extends Phaser.Scene {
       exists: (key) => !this.missingSfxKeys.has(key) && this.cache.audio.exists(key),
       play: (key, config) => this.sound.play(key, config),
     });
-
-    this.dealSource = this.resolveDealSource();
-    if (!this.dealSource) {
-      this.showBlockingConfiguration('Verified deal catalog unavailable');
-      return;
-    }
+    this.sfx.setEnabled(runtime.repository.current.settings.sfxEnabled);
 
     this.createControls();
+    this.gameplayActivity = new GameplayActivity(runtime.platform.gameplay);
+    this.gameplayActivity.setDocumentVisible(document.visibilityState === 'visible');
+    this.gameplayActivity.setPlatformPaused(runtime.platform.pause.isPaused());
+    this.platformPauseUnsubscribe = runtime.platform.pause.subscribe((paused) => {
+      this.gameplayActivity?.setPlatformPaused(paused);
+      this.session?.setVisible(document.visibilityState === 'visible' && !paused);
+    });
     this.scale.on('resize', this.handleResize, this);
+    document.addEventListener('visibilitychange', this.handleVisibilityChange);
+    this.events.on('service-overlay-closed', this.handleServiceOverlayClosed, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      if (this.sceneGeneration === generation) this.sceneGeneration += 1;
       this.scale.off('resize', this.handleResize, this);
+      document.removeEventListener('visibilitychange', this.handleVisibilityChange);
+      this.events.off('service-overlay-closed', this.handleServiceOverlayClosed, this);
+      this.platformPauseUnsubscribe?.();
+      this.platformPauseUnsubscribe = null;
+      this.gameplayActivity?.stop();
+      this.gameplayActivity = null;
+      this.session?.setVisible(false);
+      void this.session?.flushPersistence();
+      this.hintCoordinator?.clear();
+      this.hintCoordinator = null;
+      this.hintWorker?.dispose();
+      this.hintWorker = null;
+      this.tutorialController = null;
+      this.tutorialTextObject?.destroy();
+      this.tutorialTextObject = null;
       this.board?.destroy();
       this.destroyControls();
+      this.session = null;
     });
 
-    this.startNewDeal();
+    this.time.addEvent({ delay: 250, loop: true, callback: () => this.refreshHud() });
+    void this.initializeSession(generation);
   }
 
-  private resolveDealSource(): DealSource | null {
-    if (import.meta.env.DEV) return new DevelopmentDealSource(1);
+  private isCurrentSceneGeneration(generation: number): boolean {
+    return this.sceneGeneration === generation;
+  }
 
-    const injected = window.__TRIFOLD_VERIFIED_DEALS__;
-    if (!injected) return null;
+  private async initializeSession(generation: number): Promise<void> {
     try {
-      const catalog = VerifiedDealCatalog.decode(injected.buffer, injected.manifest);
-      return new VerifiedCatalogDealSource(catalog);
+      const services = getRuntimeServices();
+      const mode = this.launchData.mode;
+      if (mode === 'tutorial') {
+        this.startTutorial();
+        return;
+      }
+      if (mode === 'resume-daily') {
+        await this.resumeDaily(generation);
+        return;
+      }
+      if (mode === 'new-daily') {
+        if (!this.launchData.dailyDateKey) throw new Error('Daily launch requires a date key.');
+        await this.startNewDaily(this.launchData.dailyDateKey, generation);
+        return;
+      }
+      if (mode === 'resume-standard' && services.repository.current.activeStandard) {
+        const session = StandardSessionController.resume({ repository: services.repository, wallNow: this.platformWallNow });
+        if (!this.isCurrentSceneGeneration(generation)) return;
+        this.mountSession(session, false);
+        return;
+      }
+      await this.startNewStandard(this.launchData.difficulty ?? services.repository.current.selectedStandardDifficulty, generation);
     } catch (error) {
-      console.error('[Trifold] verified deal catalog rejected', error);
-      return null;
+      if (!this.isCurrentSceneGeneration(generation)) return;
+      console.error('[Trifold] session failed to initialize', error);
+      this.showBlockingConfiguration(tr(getRuntimeServices().language, 'error.openDeal'));
     }
   }
 
@@ -154,71 +250,375 @@ export class GameScene extends Phaser.Scene {
     return layout;
   }
 
-  private startNewDeal(): void {
-    if (!this.dealSource) return;
+  private startTutorial(): void {
+    const services = getRuntimeServices();
+    const session = StandardSessionController.startTutorial({
+      repository: services.repository,
+      wallNow: this.platformWallNow,
+    });
+    this.mountSession(session, false, true);
+    services.analytics.track('tutorial_start');
+  }
+
+  private async startNewStandard(difficulty?: StandardDifficulty, generation = this.sceneGeneration): Promise<void> {
+    if (this.sessionStarting) return;
+    this.sessionStarting = true;
+    this.refreshControls();
+    try {
+      const services = getRuntimeServices();
+      const replacingSavedStandard = services.repository.current.activeStandard !== null;
+      const previous = this.session;
+      if (previous) {
+        previous.setVisible(false);
+        await previous.flushPersistence();
+        if (!this.isCurrentSceneGeneration(generation)) return;
+      }
+      const requestedDifficulty = difficulty ?? services.repository.current.selectedStandardDifficulty;
+      const session = await StandardSessionController.startNew({
+        repository: services.repository,
+        catalog: services.catalog,
+        requestedDifficulty,
+        randomIndex: randomVerifiedIndex,
+        wallNow: this.platformWallNow,
+      });
+      if (!this.isCurrentSceneGeneration(generation)) return;
+      this.mountSession(session, true);
+      if (replacingSavedStandard) services.analytics.track('standard_reset', { difficulty: requestedDifficulty });
+      services.analytics.track('standard_start', {
+        difficulty: session.viewState.difficulty,
+        partition: session.viewState.partition,
+        seed: session.viewState.seed,
+      });
+    } catch (error) {
+      if (!this.isCurrentSceneGeneration(generation)) return;
+      console.error('[Trifold] failed to start Standard deal', error);
+      this.showBlockingConfiguration(tr(getRuntimeServices().language, 'error.newStandard'));
+    } finally {
+      if (this.sceneGeneration === generation) {
+        this.sessionStarting = false;
+        this.refreshControls();
+      }
+    }
+  }
+
+
+  private async startNewDaily(dailyDateKey: string, generation = this.sceneGeneration): Promise<void> {
+    if (this.sessionStarting) return;
+    this.sessionStarting = true;
+    this.refreshControls();
+    try {
+      const services = getRuntimeServices();
+      const previous = this.session;
+      if (previous) {
+        previous.setVisible(false);
+        await previous.flushPersistence();
+        if (!this.isCurrentSceneGeneration(generation)) return;
+      }
+      const todayKey = toLocalDateKey(new Date());
+      const common = {
+        repository: services.repository,
+        catalog: services.catalog,
+        todayKey,
+        calendarDateKeyNow: () => toLocalDateKey(new Date()),
+        wallNow: this.platformWallNow,
+      } as const;
+      const session = dailyDateKey === todayKey
+        ? await DailySessionController.startToday(common)
+        : await DailySessionController.startArchive({ ...common, dailyDateKey });
+      if (!this.isCurrentSceneGeneration(generation)) return;
+      this.mountSession(session, true);
+      services.analytics.track('daily_start', {
+        dateKey: session.viewState.dailyDateKey,
+        kind: session.viewState.kind,
+        seed: session.viewState.seed,
+      });
+    } catch (error) {
+      if (!this.isCurrentSceneGeneration(generation)) return;
+      console.error('[Trifold] failed to start Daily deal', error);
+      this.showBlockingConfiguration(tr(getRuntimeServices().language, 'error.newDaily'));
+    } finally {
+      if (this.sceneGeneration === generation) {
+        this.sessionStarting = false;
+        this.refreshControls();
+      }
+    }
+  }
+
+  private async resumeDaily(generation = this.sceneGeneration): Promise<void> {
+    const services = getRuntimeServices();
+    const todayKey = toLocalDateKey(new Date());
+    const session = await DailySessionController.resumeOrClearExpired({
+      repository: services.repository,
+      catalog: services.catalog,
+      todayKey,
+      calendarDateKeyNow: () => toLocalDateKey(new Date()),
+      wallNow: this.platformWallNow,
+    });
+    if (!this.isCurrentSceneGeneration(generation)) return;
+    this.mountSession(session, false);
+  }
+
+  private mountSession(session: ActiveSession, animateInitialDeal: boolean, tutorialMode = false): void {
     this.hideVictory();
     this.blockingMessage?.destroy();
     this.blockingMessage = null;
     this.boardReady = false;
     this.victoryAnnounced = false;
-
-    const seed = this.dealSource.nextSeed(this.currentSeed);
-    this.currentSeed = seed;
-    const game = new TrifoldGame(createDeal(seed));
-    this.gameModel = game;
+    this.session = session;
+    const runtime = getRuntimeServices();
+    this.hintCoordinator?.clear();
+    this.hintCoordinator = null;
+    this.hintWorker?.dispose();
+    this.hintWorker = null;
+    this.hintBusy = false;
+    this.tutorialController = tutorialMode ? new TutorialController() : null;
+    this.tutorialDragonFamily = null;
+    this.tutorialTextObject?.destroy();
+    this.tutorialTextObject = tutorialMode ? this.add.text(0, 0, '', {
+      color: '#d9f3ea',
+      backgroundColor: '#173d36',
+      fontFamily: 'system-ui, sans-serif',
+      fontStyle: 'bold',
+      align: 'center',
+      padding: { x: 8, y: 5 },
+    }).setOrigin(0.5, 1).setDepth(4800) : null;
+    if (session instanceof StandardSessionController && this.tutorialController === null) {
+      this.hintWorker = new HintWorkerClient();
+      this.hintCoordinator = new HintCoordinator(session, this.hintWorker);
+    }
+    this.currentCoins = runtime.repository.current.coins;
+    session.setVisible(document.visibilityState === 'visible' && !runtime.platform.pause.isPaused());
+    this.gameplayActivity?.setBlockingOverlayOpen(false);
+    this.gameplayActivity?.setBoardActive(!session.viewState.won);
     this.board?.destroy();
+    this.gameHud?.destroy();
+    this.gameHud = new GameHud(this, this.buildHudViewModel(session), {
+      home: () => this.goHome(),
+      newDeal: () => {
+        if (this.tutorialController) this.startTutorial();
+        else if (session instanceof DailySessionController) void this.startNewDaily(session.viewState.dailyDateKey);
+        else void this.startNewStandard();
+      },
+      undo: () => this.requestUndo(),
+      hint: () => { void this.requestHint(); },
+      settings: () => this.openSettingsOverlay(),
+    });
 
     const layout = this.calculateBackingLayout();
     this.currentLayout = layout;
-    const board = new TrifoldBoardView(this, game, {
-      perform: (command) => game.perform(command),
-      settleInitialAutoMoves: () => game.settleInitialAutoMoves(),
-      undo: () => game.undo(),
+    const board = new TrifoldBoardView(this, session, {
+      perform: (command) => {
+        const tutorial = this.tutorialController;
+        if (tutorial && !tutorial.canPerform(command)) return null;
+        const result = session.perform(command);
+        if (result && tutorial) tutorial.recordTransaction(command, result);
+        return result;
+      },
+      settleInitialAutoMoves: () => session.settleInitialAutoMoves(),
+      undo: () => {
+        const tutorial = this.tutorialController;
+        if (tutorial && !tutorial.waitingForUndo) return null;
+        const result = session.undo();
+        if (result && tutorial) tutorial.recordUndo();
+        return result;
+      },
       sound: (cue) => this.sfx?.play(cue),
-      settled: () => this.handleSettled(game),
-    }, layout);
+      settled: () => { void this.handleSettled(session); },
+    }, layout, getRuntimeServices().theme);
     this.board = board;
     this.applyControlLayout(layout);
     this.refreshControls();
-    board.playInitialDeal();
+    if (animateInitialDeal) board.playInitialDeal();
+    else board.showCurrentState();
+  }
+
+  private refreshTutorialGuidance(): void {
+    const tutorial = this.tutorialController;
+    if (!tutorial || !this.board) return;
+    this.board.clearHint();
+    this.tutorialDragonFamily = null;
+    const command = tutorial.expectedCommand;
+    if (command) {
+      this.board.showTutorialHint(command);
+      if (command.type === 'collect-dragons') this.tutorialDragonFamily = command.family;
+    }
+    for (const [family, control] of this.dragonControls) control.tutorialHinted = family === this.tutorialDragonFamily;
+    this.tutorialTextObject?.setText(tutorialText(tutorial.lesson, tutorial.waitingForUndo, getRuntimeServices().language));
+    if (this.currentLayout) {
+      this.applyControlLayout(this.currentLayout);
+      this.layoutTutorialOverlay(this.currentLayout);
+    }
+  }
+
+  private layoutTutorialOverlay(layout: ViewportLayout): void {
+    const text = this.tutorialTextObject;
+    if (!text) return;
+    const fontSize = Math.max(10, Math.min(16, layout.cardWidth * 0.14));
+    text.setFontSize(fontSize)
+      .setWordWrapWidth(Math.max(120, layout.boardBounds.width * 0.78))
+      .setPosition(layout.boardBounds.x + layout.boardBounds.width / 2, Math.max(layout.boardBounds.y + fontSize + 4, layout.tableauY - 2));
+  }
+
+  private openSettingsOverlay(): void {
+    const session = this.session;
+    if (!session || this.scene.isActive('SettingsScene')) return;
+    session.setBlockingOverlayOpen(true);
+    this.board?.setUiPaused(true);
+    this.gameplayActivity?.setBlockingOverlayOpen(true);
+    this.scene.launch('SettingsScene', { returnScene: 'GameScene' });
+    this.scene.pause();
+  }
+
+  private handleServiceOverlayClosed(): void {
+    const session = this.session;
+    if (!session) return;
+    this.sfx?.setEnabled(getRuntimeServices().repository.current.settings.sfxEnabled);
+    session.setBlockingOverlayOpen(false);
+    this.board?.setUiPaused(false);
+    this.gameplayActivity?.setBlockingOverlayOpen(false);
+    this.refreshControls();
+    this.refreshTutorialGuidance();
   }
 
   private requestUndo(): void {
+    this.clearHintVisuals();
     this.board?.requestUndo();
   }
 
   private collectDragons(family: DragonFamily): void {
+    this.clearHintVisuals();
     this.board?.collectDragons(family);
   }
 
-  private handleSettled(game: TrifoldGame): void {
-    if (this.gameModel !== game) return;
+  private async requestHint(): Promise<void> {
+    const session = this.session;
+    const coordinator = this.hintCoordinator;
+    if (!(session instanceof StandardSessionController) || this.tutorialController !== null || !coordinator || this.hintBusy || !this.boardReady) return;
+    const runtime = getRuntimeServices();
+
+    this.hintBusy = true;
+    this.clearHintVisuals();
+    runtime.analytics.track('hint_attempt', { seed: session.viewState.seed, difficulty: session.viewState.difficulty });
+    session.setBlockingOverlayOpen(true);
+    this.board?.setUiPaused(true);
+    this.gameplayActivity?.setBlockingOverlayOpen(true);
+    this.refreshHud();
+    try {
+      const prepared = await coordinator.prepare();
+      if (prepared.status !== 'ready') return;
+      const command = await coordinator.revealPreparedHint();
+      if (!command || this.session !== session) return;
+      this.board?.showHint(command);
+      this.setHintedDragonFamily(command.type === 'collect-dragons' ? command.family : null);
+      runtime.analytics.track('hint_success', { seed: session.viewState.seed, difficulty: session.viewState.difficulty });
+    } catch (error) {
+      console.error('[Trifold] hint failed', error);
+    } finally {
+      session.setBlockingOverlayOpen(false);
+      this.board?.setUiPaused(false);
+      this.gameplayActivity?.setBlockingOverlayOpen(false);
+      this.hintBusy = false;
+      this.refreshControls();
+    }
+  }
+
+  private clearHintVisuals(): void {
+    this.board?.clearHint();
+    this.setHintedDragonFamily(null);
+  }
+
+  private setHintedDragonFamily(family: DragonFamily | null): void {
+    for (const [candidate, control] of this.dragonControls) control.hinted = candidate === family;
+    if (this.currentLayout) this.applyControlLayout(this.currentLayout);
+  }
+
+  private async handleSettled(session: ActiveSession): Promise<void> {
+    if (this.session !== session) return;
     this.boardReady = true;
-    if (isWon(game.state) && !this.victoryAnnounced) {
+    this.refreshTutorialGuidance();
+    if (session.viewState.won && !this.victoryAnnounced) {
       this.victoryAnnounced = true;
       this.boardReady = false;
       this.sfx?.play('victory');
       this.board?.setUiPaused(true);
-      this.showVictory();
+      session.setBlockingOverlayOpen(true);
+      this.gameplayActivity?.setBoardActive(false);
+      this.gameplayActivity?.setBlockingOverlayOpen(true);
+      try {
+        const runtime = getRuntimeServices();
+        if (session instanceof DailySessionController) {
+          const beforeBestStreak = runtime.repository.current.daily.bestStreak;
+          const settlement = await session.settleWin();
+          this.currentCoins = settlement.profile.coins;
+          const event = session.viewState.kind === 'archive' ? 'daily_archive_win' : 'daily_win';
+          runtime.analytics.track(event, {
+            dateKey: session.viewState.dailyDateKey,
+            moves: session.viewState.moves,
+            activeMs: session.viewState.activeMs,
+            firstCompletion: settlement.firstCompletion,
+          });
+          if (settlement.completedOnTime && settlement.firstCompletion) {
+            runtime.analytics.track('streak_changed', { bestStreak: settlement.profile.daily.bestStreak });
+          }
+          if (settlement.profile.daily.bestStreak !== beforeBestStreak && !settlement.completedOnTime) {
+            runtime.analytics.track('streak_changed', { bestStreak: settlement.profile.daily.bestStreak });
+          }
+          if (settlement.rankAdvancedTo) runtime.analytics.track('mastery_rank_up', { rank: settlement.rankAdvancedTo });
+          void runtime.leaderboards.syncFromProfile(settlement.profile, toLocalDateKey(new Date()), runtime.catalog);
+          if (this.session === session) this.showDailyVictory(settlement, session.viewState);
+        } else {
+          let settlement = await session.settleWin();
+          if (this.tutorialController?.recordWin()) {
+            const completedProfile = await runtime.repository.mutate((profile) => ({ ...profile, tutorialCompleted: true }));
+            settlement = { ...settlement, profile: completedProfile };
+            runtime.analytics.track('tutorial_complete');
+          }
+          this.currentCoins = settlement.profile.coins;
+          runtime.analytics.track('standard_win', {
+            difficulty: session.viewState.difficulty,
+            partition: session.viewState.partition,
+            moves: session.viewState.moves,
+            activeMs: session.viewState.activeMs,
+            assisted: session.viewState.assisted,
+            firstCompletion: settlement.firstCompletion,
+          });
+          if (settlement.rankAdvancedTo) runtime.analytics.track('mastery_rank_up', { rank: settlement.rankAdvancedTo });
+          void runtime.leaderboards.syncFromProfile(settlement.profile, toLocalDateKey(new Date()), runtime.catalog);
+          if (this.session === session) this.showVictory(settlement, session.viewState);
+        }
+      } catch (error) {
+        console.error('[Trifold] failed to settle win', error);
+        this.showBlockingConfiguration(tr(getRuntimeServices().language, 'error.saveWin'));
+      }
     }
     this.refreshControls();
   }
 
+  private handleVisibilityChange = (): void => {
+    const visible = document.visibilityState === 'visible';
+    const paused = getRuntimeServices().platform.pause.isPaused();
+    this.gameplayActivity?.setDocumentVisible(visible);
+    this.session?.setVisible(visible && !paused);
+  };
+
+  private platformWallNow = (): number => getRuntimeServices().platform.clock.nowMs() ?? Date.now();
+
   private handleResize(): void {
+    this.clearHintVisuals();
     const layout = this.calculateBackingLayout();
     this.currentLayout = layout;
     const board = this.board;
     if (board) board.relayout(layout);
     this.applyControlLayout(layout);
     this.layoutVictory(layout);
+    this.layoutTutorialOverlay(layout);
+    this.refreshTutorialGuidance();
     if (this.blockingMessage) {
       this.blockingMessage.setPosition(layout.viewportWidth / 2, layout.viewportHeight / 2);
     }
   }
 
   private createControls(): void {
-    this.newDealControl = this.createControl('Новая раздача', () => this.startNewDeal());
-    this.undoControl = this.createControl('Отмена', () => this.requestUndo());
     for (const family of DRAGONS) {
       this.dragonControls.set(
         family,
@@ -241,7 +641,7 @@ export class GameScene extends Phaser.Scene {
       fontStyle: 'bold',
       align: 'center',
     }).setOrigin(0.5).setDepth(2001);
-    const control: SceneControl = { zone, graphics, label, text, variant, enabled: true, completed: false };
+    const control: SceneControl = { zone, graphics, label, text, variant, enabled: true, completed: false, hinted: false, tutorialHinted: false };
     zone.on('pointerdown', () => {
       if (!control.enabled) return;
       if (playButtonSound) this.sfx?.play('button');
@@ -257,9 +657,13 @@ export class GameScene extends Phaser.Scene {
     const fillColor = dragon
       ? (control.completed ? 0x4f4524 : control.enabled ? 0xd7b84d : 0x8b7430)
       : 0x264b3b;
-    const lineColor = dragon
-      ? (control.completed ? 0x70633a : control.enabled ? 0xf0d778 : 0xb49a4b)
-      : 0x91ad9f;
+    const lineColor = control.tutorialHinted
+      ? 0x79c8b5
+      : control.hinted
+        ? 0xffef92
+        : dragon
+        ? (control.completed ? 0x70633a : control.enabled ? 0xf0d778 : 0xb49a4b)
+        : 0x91ad9f;
     const fillAlpha = dragon
       ? (control.completed ? 0.62 : control.enabled ? 0.98 : 0.72)
       : (control.enabled ? 0.95 : 0.45);
@@ -267,7 +671,7 @@ export class GameScene extends Phaser.Scene {
       ? (control.completed ? 0.5 : control.enabled ? 1 : 0.72)
       : (control.enabled ? 0.9 : 0.35);
     control.graphics.fillStyle(fillColor, fillAlpha);
-    control.graphics.lineStyle(Math.max(1, bounds.height * 0.04), lineColor, lineAlpha);
+    control.graphics.lineStyle(Math.max(1, bounds.height * ((control.hinted || control.tutorialHinted) ? 0.07 : 0.04)), lineColor, (control.hinted || control.tutorialHinted) ? 1 : lineAlpha);
     control.graphics.fillRoundedRect(bounds.x, bounds.y, bounds.width, bounds.height, Math.max(4, bounds.height * 0.18));
     control.graphics.strokeRoundedRect(bounds.x, bounds.y, bounds.width, bounds.height, Math.max(4, bounds.height * 0.18));
     control.label.setPosition(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
@@ -290,74 +694,175 @@ export class GameScene extends Phaser.Scene {
   }
 
   private applyControlLayout(layout: ViewportLayout): void {
-    this.layoutControl(this.newDealControl, layout.newDealControl);
-    this.layoutControl(this.undoControl, layout.undoControl);
+    this.gameHud?.layout(layout);
     DRAGONS.forEach((family, index) => {
       const bounds = layout.dragonControls[index];
       if (bounds) this.layoutControl(this.dragonControls.get(family) ?? null, bounds);
     });
+    this.layoutTutorialOverlay(layout);
   }
 
   private refreshControls(): void {
-    const game = this.gameModel;
-    if (this.newDealControl) this.newDealControl.enabled = true;
-    if (this.undoControl) this.undoControl.enabled = this.boardReady && game?.canUndo === true;
+    const session = this.session;
+    this.refreshHud();
     for (const family of DRAGONS) {
       const control = this.dragonControls.get(family);
       if (!control) continue;
-      const completed = game?.state.freeCells.some(
+      const completed = session?.state.freeCells.some(
         (cell) => cell.kind === 'dragons' && cell.family === family,
       ) === true;
       control.completed = completed;
       control.enabled = !completed
         && this.boardReady
-        && game !== null
-        && canCollectDragons(game.state, family) !== null;
+        && session !== null
+        && canCollectDragons(session.state, family) !== null;
     }
     if (this.currentLayout) this.applyControlLayout(this.currentLayout);
   }
 
-  private showVictory(): void {
+  private buildHudViewModel(session: ActiveSession) {
+    const language = getRuntimeServices().language;
+    if (session instanceof DailySessionController) {
+      const state = session.viewState;
+      return buildGameHudViewModel({
+        modeLabel: 'Daily',
+        moves: state.moves,
+        activeMs: state.activeMs,
+        assisted: false,
+        canUndo: this.boardReady && session.canUndo,
+        coins: this.currentCoins,
+        hintEligible: false,
+      }, language);
+    }
+    const state = session.viewState;
+    return buildGameHudViewModel({
+      difficulty: state.difficulty,
+      moves: state.moves,
+      activeMs: state.activeMs,
+      assisted: state.assisted,
+      canUndo: this.boardReady && session.canUndo,
+      coins: this.currentCoins,
+      hintEligible: this.tutorialController === null
+        && this.boardReady
+        && !state.won
+        && !this.hintBusy
+        && this.hintCoordinator !== null
+        && !this.hintCoordinator.isUnavailableForCurrentState(),
+    }, language);
+  }
+
+  private refreshHud(): void {
+    const session = this.session;
+    if (!session || !this.gameHud) return;
+    this.gameHud.setState(this.buildHudViewModel(session));
+  }
+
+  private goHome(): void {
+    this.clearHintVisuals();
+    this.session?.setVisible(false);
+    void this.session?.flushPersistence();
+    this.scene.start('HomeScene');
+  }
+
+  private showVictory(
+    settlement: StandardWinSettlementResult,
+    viewState: StandardSessionViewState,
+  ): void {
     this.hideVictory();
-    const background = this.add.rectangle(0, 0, 1, 1, 0x10261e, 0.94).setOrigin(0.5);
-    const title = this.add.text(0, 0, 'Победа', {
-      color: '#ffffff',
-      fontFamily: 'system-ui, sans-serif',
-      fontStyle: 'bold',
-    }).setOrigin(0.5);
-    const next = this.add.text(0, 0, 'Новая раздача', {
-      color: '#dcebe3',
-      backgroundColor: '#2b5a45',
-      padding: { x: 16, y: 10 },
-      fontFamily: 'system-ui, sans-serif',
-      fontStyle: 'bold',
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-    next.on('pointerdown', () => this.startNewDeal());
-    this.victoryOverlay = this.add.container(0, 0, [background, title, next]).setDepth(5000);
-    if (this.currentLayout) this.layoutVictory(this.currentLayout);
+    const services = getRuntimeServices();
+    const viewModel = buildStandardWinViewModel(settlement, viewState, services.language);
+    const offer = createRewardDoubleOffer({
+      seed: viewState.seed,
+      difficulty: viewState.difficulty,
+      baseCoinsGranted: settlement.baseCoinsGranted,
+      firstCompletion: settlement.firstCompletion,
+    });
+    const canDouble = offer !== null && services.rewardedAds.available;
+    const baseContent = buildStandardWinOverlayContent(viewModel, services.language);
+    this.victoryOverlay = new WinOverlay(
+      this,
+      {
+        ...baseContent,
+        rewardActionLabel: canDouble ? tr(services.language, 'win.doubleCoins') : null,
+        rewardActionEnabled: canDouble,
+      },
+      {
+        newDeal: () => { void this.startNewStandard(); },
+        home: () => this.goHome(),
+        ...(canDouble && offer ? { doubleCoins: () => { void this.claimStandardRewardDouble(offer, viewModel, viewState.seed); } } : {}),
+      },
+    );
+    if (this.currentLayout) this.victoryOverlay.layout(this.currentLayout);
+  }
+
+  private async claimStandardRewardDouble(offer: RewardDoubleOffer, viewModel: StandardWinViewModel, seed: number): Promise<void> {
+    if (this.rewardDoubleClaiming) return;
+    const services = getRuntimeServices();
+    if (!services.rewardedAds.available || !this.victoryOverlay) return;
+    const overlay = this.victoryOverlay;
+    const idleContent = buildStandardWinOverlayContent(viewModel, services.language);
+    this.rewardDoubleClaiming = true;
+    services.analytics.track('reward_double_attempt', { seed, bonusCoins: offer.bonusCoins });
+    overlay.setContent({ ...idleContent, rewardActionLabel: tr(services.language, 'common.loading'), rewardActionEnabled: false });
+    if (this.currentLayout) overlay.layout(this.currentLayout);
+    try {
+      const rewarded = await services.rewardedAds.showRewarded();
+      if (!rewarded) {
+        if (this.victoryOverlay === overlay) {
+          overlay.setContent({ ...idleContent, rewardActionLabel: tr(services.language, 'win.doubleCoins'), rewardActionEnabled: true });
+        }
+        return;
+      }
+      const profile = await services.repository.mutate((current) => claimRewardDouble(current, offer));
+      services.analytics.track('reward_double_success', { seed, bonusCoins: offer.bonusCoins });
+      this.currentCoins = profile.coins;
+      this.refreshHud();
+      if (this.victoryOverlay === overlay) {
+        const rewardLine = [idleContent.rewardLine, tr(services.language, 'common.bonusAd', { count: offer.bonusCoins })].filter(Boolean).join(' · ');
+        overlay.setContent({ ...idleContent, rewardLine, rewardActionLabel: null, rewardActionEnabled: false });
+      }
+    } catch (error) {
+      console.error('[Trifold] rewarded double failed', error);
+      if (this.victoryOverlay === overlay) {
+        overlay.setContent({ ...idleContent, rewardActionLabel: tr(services.language, 'win.doubleCoins'), rewardActionEnabled: true });
+      }
+    } finally {
+      this.rewardDoubleClaiming = false;
+      if (this.victoryOverlay === overlay && this.currentLayout) overlay.layout(this.currentLayout);
+    }
+  }
+
+
+  private showDailyVictory(
+    settlement: DailyWinSettlementResult,
+    viewState: DailySessionViewState,
+  ): void {
+    this.hideVictory();
+    const todayKey = toLocalDateKey(new Date());
+    this.victoryOverlay = new WinOverlay(
+      this,
+      buildDailyWinOverlayContent(settlement, viewState, todayKey, getRuntimeServices().language),
+      {
+        newDeal: () => { void this.startNewDaily(viewState.dailyDateKey); },
+        home: () => this.goHome(),
+      },
+    );
+    if (this.currentLayout) this.victoryOverlay.layout(this.currentLayout);
   }
 
   private layoutVictory(layout: ViewportLayout): void {
-    if (!this.victoryOverlay) return;
-    const [background, title, next] = this.victoryOverlay.list as [
-      Phaser.GameObjects.Rectangle,
-      Phaser.GameObjects.Text,
-      Phaser.GameObjects.Text,
-    ];
-    const width = Math.min(layout.viewportWidth * 0.42, layout.cardWidth * 4.4);
-    const height = Math.min(layout.viewportHeight * 0.42, layout.cardHeight * 2.1);
-    this.victoryOverlay.setPosition(layout.viewportWidth / 2, layout.viewportHeight / 2);
-    background.setDisplaySize(width, height);
-    title.setPosition(0, -height * 0.18).setFontSize(Math.max(20, height * 0.2));
-    next.setPosition(0, height * 0.2).setFontSize(Math.max(12, height * 0.11));
+    this.victoryOverlay?.layout(layout);
   }
 
   private hideVictory(): void {
-    this.victoryOverlay?.destroy(true);
+    this.victoryOverlay?.destroy();
     this.victoryOverlay = null;
+    this.gameplayActivity?.setBlockingOverlayOpen(false);
   }
 
   private showBlockingConfiguration(message: string): void {
+    this.gameplayActivity?.setBoardActive(false);
+    this.gameplayActivity?.setBlockingOverlayOpen(true);
     const layout = this.calculateBackingLayout();
     this.currentLayout = layout;
     this.blockingMessage?.destroy();
@@ -371,16 +876,16 @@ export class GameScene extends Phaser.Scene {
   }
 
   private destroyControls(): void {
-    const controls = [this.newDealControl, this.undoControl, ...this.dragonControls.values()];
-    for (const control of controls) {
-      if (!control) continue;
+    for (const control of this.dragonControls.values()) {
       control.zone.destroy();
       control.graphics.destroy();
       control.label.destroy();
     }
-    this.newDealControl = null;
-    this.undoControl = null;
+    this.gameHud?.destroy();
+    this.gameHud = null;
     this.dragonControls.clear();
+    this.tutorialTextObject?.destroy();
+    this.tutorialTextObject = null;
     this.hideVictory();
   }
 }

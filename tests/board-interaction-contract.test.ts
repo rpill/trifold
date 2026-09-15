@@ -90,7 +90,7 @@ test('initial deal uses the flower slot as its source and removes the temporary 
   const board = source('../src/game/view/TrifoldBoardView.ts');
   assert.ok(board.includes('this.layout.dealOrigin.x'));
   assert.ok(board.includes('this.dealStack.clear()'));
-  assert.ok(board.includes("['FREE', 'FREE', 'FREE', 'F', 'R', 'G', 'B', 'RD', 'GD', 'WD']"));
+  assert.ok(board.includes("['FREE', 'FREE', 'FREE', 'F', 'R', 'G', 'B', 'RD', 'GD', 'BD']"));
   assert.equal(board.includes("'DEAL'"), false);
 });
 
@@ -197,4 +197,21 @@ test('tableau columns render persistent slot outlines beneath cards', () => {
   assert.ok(redraw.includes('tableauSlotAlpha'), 'tableau placeholders should have their own subdued alpha');
   assert.ok(redraw.includes('for (const x of this.layout.tableauX)'), 'all eight tableau columns need a placeholder');
   assert.ok(redraw.includes('this.layout.tableauY'), 'tableau placeholders must sit at the tableau origin');
+});
+
+test('board exposes non-mutating hint highlights and clears them on interaction, undo, resize and destroy', () => {
+  const board = source('../src/game/view/TrifoldBoardView.ts');
+  for (const required of [
+    'showHint(command: PlayerCommand)', 'clearHint(): void', 'hintGraphics', 'hintTween',
+    'this.clearHint();', "command.type === 'collect-dragons'", 'canCollectDragons',
+  ]) assert.ok(board.includes(required), `expected hint board contract to include ${required}`);
+});
+
+test('tutorial source highlight spans the full multi-card tableau run', () => {
+  const board = source('../src/game/view/TrifoldBoardView.ts');
+  for (const required of [
+    'sourceCards[sourceCards.length - 1]',
+    'lastSourcePlacement.y + this.layout.cardHeight - sourcePlacement.y',
+    'outline(sourcePlacement.x, sourcePlacement.y, sourceHeight)',
+  ]) assert.ok(board.includes(required), `tutorial multi-card highlight should include ${required}`);
 });

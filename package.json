@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "tsc && vite build",
+    "cards:build": "node tools/cards/build-cards.mjs",
     "preview": "vite preview --host 0.0.0.0",
     "test": "node tools/deals/build-solver.mjs && node --experimental-strip-types --test tests/*.test.ts tests/*.test.mjs",
     "deals:build-solver": "node tools/deals/build-solver.mjs",
@@ -13,7 +14,9 @@
     "deals:generate": "node --experimental-strip-types tools/deals/generate.mjs",
     "deals:probe": "node tools/deals/probe.mjs",
     "deals:verify-all": "node --experimental-strip-types tools/deals/verify-all.mjs",
-    "deals:report": "node --experimental-strip-types tools/deals/report.mjs"
+    "deals:report": "node --experimental-strip-types tools/deals/report.mjs",
+    "tutorial:select-deal": "node --experimental-strip-types tools/tutorial/select-tutorial-deal.mjs",
+    "dev:yandex": "node tools/dev/yandex-dev.mjs"
   },
   "dependencies": {
     "phaser": "^3.90.0"
