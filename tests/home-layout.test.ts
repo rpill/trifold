@@ -8,17 +8,18 @@ for (const env of [
   { width: 1280, height: 720, touchPrimary: true },
   { width: 844, height: 390, touchPrimary: true },
 ]) {
-  test(`home dashboard preserves approved hierarchy at ${env.width}x${env.height}`, () => {
+  test(`home dashboard keeps three product destinations under the Standard module at ${env.width}x${env.height}`, () => {
     const layout = computeHomeLayout(resolveUiViewport(env));
     assert.ok(layout.brand.width < layout.dashboard.width);
     assert.equal(layout.daily.y, layout.mastery.y);
     assert.equal(layout.daily.height, layout.mastery.height);
-    assert.equal(layout.continueCard.x, layout.themes.x);
-    assert.equal(layout.continueCard.width, layout.themes.width);
+    assert.equal(layout.continueCard.x, layout.daily.x);
+    assert.equal(layout.daily.width, layout.leaders.width);
     assert.ok(layout.continueCard.y < layout.daily.y);
-    assert.ok(layout.daily.y < layout.themes.y);
+    assert.equal(layout.daily.y, layout.leaders.y);
+    assert.ok(layout.mastery.x + layout.mastery.width < layout.leaders.x);
+    assert.ok(Math.abs(layout.leaders.x + layout.leaders.width - layout.dashboard.x - layout.dashboard.width) < 0.01);
     assert.ok(layout.serviceActions.y <= layout.continueCard.y);
-    assert.ok(layout.coinPill.x >= layout.dashboard.x);
   });
 }
 
@@ -39,7 +40,6 @@ test('mobile Home service controls stay at CSS-scale touch size instead of inver
   const layout = computeHomeLayout(viewport);
   assert.equal(viewport.minTouchTarget, 44);
   assert.ok(layout.serviceActions.height >= 44 && layout.serviceActions.height <= 52);
-  assert.ok(layout.coinPill.width <= 140);
 });
 
 

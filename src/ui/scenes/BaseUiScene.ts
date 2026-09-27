@@ -1,17 +1,22 @@
 import Phaser from 'phaser';
+import { SceneBackdrop } from '../components/SceneBackdrop.ts';
 import { resolveUiViewport, scaleUiViewportForBacking, type ResolvedUiViewport } from '../layout/UiViewport.ts';
 
 export abstract class BaseUiScene extends Phaser.Scene {
   private responsiveBound = false;
   private viewport: ResolvedUiViewport | null = null;
+  private backdrop: SceneBackdrop | null = null;
 
   protected bindResponsiveLayout(): ResolvedUiViewport {
     if (!this.responsiveBound) {
+      this.backdrop = new SceneBackdrop(this, this.sys.settings.key === 'HomeScene' ? 'home' : 'menu');
       this.scale.on('resize', this.handleUiResize, this);
       this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
         this.scale.off('resize', this.handleUiResize, this);
         this.responsiveBound = false;
         this.viewport = null;
+        this.backdrop?.destroy();
+        this.backdrop = null;
       });
       this.responsiveBound = true;
     }
@@ -39,6 +44,7 @@ export abstract class BaseUiScene extends Phaser.Scene {
 
   private refreshUiLayout(): ResolvedUiViewport {
     const viewport = this.resolveCurrentUiViewport();
+    this.backdrop?.layout(viewport.width, viewport.height);
     this.layout(viewport);
     return viewport;
   }

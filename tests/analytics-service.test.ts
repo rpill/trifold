@@ -12,9 +12,9 @@ const expected: readonly AnalyticsEvent[] = [
   'first_run', 'standard_start', 'standard_win', 'standard_reset',
   'standard_difficulty_selected', 'daily_open', 'daily_start', 'daily_win',
   'daily_archive_open', 'daily_archive_win', 'streak_changed', 'mastery_rank_up',
-  'hint_attempt', 'hint_success', 'reward_double_attempt', 'reward_double_success',
-  'shop_open', 'theme_purchase', 'theme_apply', 'coin_pack_purchase',
+  'hint_attempt', 'hint_success',
   'leaderboard_open', 'auth_success', 'tutorial_start', 'tutorial_complete',
+  'fullscreen_requested', 'fullscreen_shown', 'fullscreen_not_shown',
 ];
 
 test('analytics exposes the exact approved release event schema', () => {

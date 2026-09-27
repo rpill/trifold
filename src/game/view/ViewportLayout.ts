@@ -111,7 +111,7 @@ export function calculateViewportLayout(
     1,
     (boardHeight - rowGap - bottomMargin - minimumFanGap * 4) / (CARD_ASPECT_RATIO * 2),
   );
-  const preferred = compact ? 84 : 118;
+  const preferred = compact ? 84 : clamp(118, safeWidth * 0.095, MAX_CARD_WIDTH);
   const minimum = compact ? COMPACT_MIN_CARD_WIDTH : STANDARD_MIN_CARD_WIDTH;
   const rawCardWidth = Math.min(preferred, topFit, tableauFit, heightFit, MAX_CARD_WIDTH);
   const cardWidth = rawCardWidth >= minimum ? rawCardWidth : Math.max(1, rawCardWidth);
@@ -145,16 +145,17 @@ export function calculateViewportLayout(
   const centerStart = leftEnd + topGap;
   const centerEnd = flowerFoundation.x - topGap;
   const centerWidth = Math.max(1, centerEnd - centerStart);
-  const dragonGap = compact ? 3 : 6;
-  const dragonWidth = Math.max(1, Math.min(cardWidth * 0.5, (centerWidth - dragonGap * 2) / 3));
-  const dragonHeight = Math.min(cardHeight * 0.34, compact ? 34 : 46);
-  const dragonsWidth = dragonWidth * 3 + dragonGap * 2;
-  const dragonStart = centerStart + Math.max(0, (centerWidth - dragonsWidth) / 2);
+  const dragonGap = compact ? 4 : 6;
+  // Keep the existing card budget and all card positions. Stack the controls
+  // in the central space, matching the original game's top-row hierarchy.
+  const dragonSize = Math.max(1, Math.min(centerWidth, (cardHeight - dragonGap * 2) / 3, 56));
+  const dragonStartX = centerStart + (centerWidth - dragonSize) / 2;
+  const dragonStartY = topY + (cardHeight - dragonSize * 3 - dragonGap * 2) / 2;
   const dragonControls = Array.from({ length: 3 }, (_, index) => ({
-    x: dragonStart + index * (dragonWidth + dragonGap),
-    y: topY + (cardHeight - dragonHeight) / 2,
-    width: dragonWidth,
-    height: dragonHeight,
+    x: dragonStartX,
+    y: dragonStartY + index * (dragonSize + dragonGap),
+    width: dragonSize,
+    height: dragonSize,
   }));
 
   const tableauY = topY + cardHeight + rowGap;

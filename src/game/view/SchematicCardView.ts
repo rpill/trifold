@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { getCard } from '../model/TrifoldRules.ts';
 import type { CardId, DragonFamily, NumericSuit } from '../model/types.ts';
-import type { CardBackStyle } from '../../theme/CardBackStyle.ts';
+import type { CardBackStyle } from '../appearance/CardBackStyle.ts';
 import {
   cardFaceDensityForRenderScale,
   cardFaceTextureKey,

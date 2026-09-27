@@ -36,7 +36,7 @@ import { tableauCardY } from './layout.ts';
 import { drawSchematicCardBack, SchematicCardView } from './SchematicCardView.ts';
 import { DealStackVisualState } from './DealStackVisualState.ts';
 import type { ViewportLayout } from './ViewportLayout.ts';
-import { ThemeRuntime } from '../../theme/ThemeRuntime.ts';
+import { TRIFOLD_APPEARANCE } from '../appearance/GameAppearance.ts';
 
 export interface BoardStateSource {
   readonly state: ReadonlyTrifoldState;
@@ -88,7 +88,6 @@ export class TrifoldBoardView {
   private readonly activeTweens = new Set<Phaser.Tweens.Tween>();
   private readonly activeTimers = new Set<Phaser.Time.TimerEvent>();
   private readonly dragDistanceThreshold: number;
-  private readonly theme: ThemeRuntime;
   private layout: ViewportLayout;
   private inputLocked = true;
   private uiPaused = false;
@@ -105,20 +104,18 @@ export class TrifoldBoardView {
     game: BoardStateSource,
     actions: BoardActions,
     layout: ViewportLayout,
-    theme: ThemeRuntime,
   ) {
     this.scene = scene;
     this.game = game;
     this.actions = actions;
     this.layout = layout;
-    this.theme = theme;
     this.dragDistanceThreshold = scene.input.dragDistanceThreshold;
     this.slots = scene.add.graphics().setDepth(2);
     this.dealStack = scene.add.graphics().setDepth(4);
     this.hintGraphics = scene.add.graphics().setDepth(4500);
 
     for (const card of createDeck()) {
-      const view = new SchematicCardView(scene, card.id, layout.cardWidth, layout.cardHeight, this.theme.cardBackStyle);
+      const view = new SchematicCardView(scene, card.id, layout.cardWidth, layout.cardHeight, TRIFOLD_APPEARANCE.cardBackStyle);
       view.setVisible(false);
       this.cards.set(card.id, view);
       this.installCardInput(card.id, view);
@@ -321,9 +318,9 @@ export class TrifoldBoardView {
     this.hintGraphics.setAlpha(1).clear();
   }
 
-  refreshTheme(): void {
+  refreshAppearance(): void {
     if (this.destroyed) return;
-    for (const view of this.cards.values()) view.setCardBackStyle(this.theme.cardBackStyle);
+    for (const view of this.cards.values()) view.setCardBackStyle(TRIFOLD_APPEARANCE.cardBackStyle);
     this.redrawSlots();
     this.updateDealStack();
   }
@@ -563,7 +560,7 @@ export class TrifoldBoardView {
     const tableauSlotAlpha = 0.34;
 
     this.slots.clear();
-    this.slots.lineStyle(lineWidth, this.theme.slotPalette.edge, freeSlotAlpha);
+    this.slots.lineStyle(lineWidth, TRIFOLD_APPEARANCE.slotPalette.edge, freeSlotAlpha);
     for (const point of this.layout.freeCells) {
       this.slots.strokeRoundedRect(
         point.x,
@@ -574,7 +571,7 @@ export class TrifoldBoardView {
       );
     }
 
-    this.slots.lineStyle(lineWidth, this.theme.slotPalette.edge, foundationSlotAlpha);
+    this.slots.lineStyle(lineWidth, TRIFOLD_APPEARANCE.slotPalette.edge, foundationSlotAlpha);
     const foundationSlots = [this.layout.flowerFoundation, ...this.layout.foundations];
     for (const point of foundationSlots) {
       this.slots.strokeRoundedRect(
@@ -586,7 +583,7 @@ export class TrifoldBoardView {
       );
     }
 
-    this.slots.lineStyle(lineWidth, this.theme.slotPalette.edge, tableauSlotAlpha);
+    this.slots.lineStyle(lineWidth, TRIFOLD_APPEARANCE.slotPalette.edge, tableauSlotAlpha);
     for (const x of this.layout.tableauX) {
       this.slots.strokeRoundedRect(
         x,
@@ -597,14 +594,14 @@ export class TrifoldBoardView {
       );
     }
 
-    this.slots.lineStyle(Math.max(1, lineWidth * 0.9), this.theme.slotPalette.edge, 0.5);
+    this.slots.lineStyle(Math.max(1, lineWidth * 0.9), TRIFOLD_APPEARANCE.slotPalette.edge, 0.5);
     for (const bounds of this.layout.dragonControls) {
       this.slots.strokeRoundedRect(
         bounds.x,
         bounds.y,
         bounds.width,
         bounds.height,
-        Math.max(3, bounds.height * 0.18),
+        Math.min(bounds.width, bounds.height) / 2,
       );
     }
 
@@ -618,7 +615,7 @@ export class TrifoldBoardView {
           this.layout.cardWidth,
           this.layout.cardHeight,
           false,
-          this.theme.cardBackStyle,
+          TRIFOLD_APPEARANCE.cardBackStyle,
         );
       }
       const label = this.slotLabels[index];
@@ -671,7 +668,7 @@ export class TrifoldBoardView {
         width,
         height,
         !top,
-        this.theme.cardBackStyle,
+        TRIFOLD_APPEARANCE.cardBackStyle,
       );
     });
   }

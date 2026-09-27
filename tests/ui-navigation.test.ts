@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { ROUTE_SCENES, type UiRoute } from '../src/ui/navigation/UiRoute.ts';
 import { NavigationController } from '../src/ui/navigation/NavigationController.ts';
 
-const routes: readonly UiRoute[] = ['home', 'standard', 'daily', 'mastery', 'themes', 'leaderboards'];
+const routes: readonly UiRoute[] = ['home', 'standard', 'daily', 'mastery', 'leaderboards'];
 
 test('every major route maps to exactly one Phaser scene key', () => {
   assert.deepEqual(Object.keys(ROUTE_SCENES).sort(), [...routes].sort());
@@ -11,7 +11,6 @@ test('every major route maps to exactly one Phaser scene key', () => {
   assert.equal(ROUTE_SCENES.standard, 'GameScene');
   assert.equal(ROUTE_SCENES.daily, 'DailyScene');
   assert.equal(ROUTE_SCENES.mastery, 'MasteryScene');
-  assert.equal(ROUTE_SCENES.themes, 'ThemesScene');
   assert.equal(ROUTE_SCENES.leaderboards, 'LeaderboardsScene');
 });
 

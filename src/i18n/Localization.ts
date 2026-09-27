@@ -1,5 +1,4 @@
 import type { MasteryRank, StandardDifficulty } from '../meta/profile/ProfileTypes.ts';
-import type { ThemeId } from '../theme/ThemeDefinition.ts';
 import type { AppLanguage } from './Language.ts';
 
 const RU = {
@@ -13,10 +12,8 @@ const RU = {
   'common.back': 'Назад',
   'common.replay': 'Переиграть',
   'common.loading': 'Загрузка…',
-  'common.coins': '{count} монет',
-  'common.bonusAd': '+{count} за рекламу',
 
-  'home.themes': 'Темы',
+  'mastery.title': 'Мастерство',
   'home.subtitle': 'Пасьянс · путь мастерства',
   'home.confirmNewTitle': 'Начать новую раздачу?',
   'home.confirmNewBody': 'Текущая незавершённая партия будет заменена.',
@@ -43,9 +40,9 @@ const RU = {
   'hud.assisted': 'С подсказкой',
 
   'daily.playToday': 'Играть сегодня',
+  'daily.weekdays': 'Пн,Вт,Ср,Чт,Пт,Сб,Вс',
   'daily.playArchive': 'Играть архив',
   'daily.notCompleted': 'Ещё не пройдено',
-  'daily.reward': '+{count} монет',
   'daily.streakSummary': 'Серия {current} · рекорд {best}',
   'daily.official': 'Официальный: {result}',
   'daily.personal': 'Личный: {result}',
@@ -59,7 +56,6 @@ const RU = {
 
   'mastery.nextRank': 'До следующего ранга',
   'mastery.maxRank': 'Высший ранг достигнут',
-  'mastery.rankReward': 'Награда за ранг: +{count} монет',
   'mastery.complete': 'Mastery завершён',
   'mastery.maxLine': 'Максимальный ранг Mastery',
   'mastery.unchanged': 'Mastery без изменений',
@@ -83,14 +79,6 @@ const RU = {
   'leaderboards.failed': 'Не удалось загрузить результаты',
   'leaderboards.player': 'Игрок',
 
-  'themes.title': 'Темы',
-  'themes.buyCoins': 'Купить монеты',
-  'themes.purchasesUnavailable': 'Покупки пока недоступны',
-  'themes.purchasing': 'Покупка…',
-  'themes.active': 'Используется',
-  'themes.owned': 'В коллекции',
-  'themes.locked': 'Не открыта',
-  'themes.apply': 'Применить',
 
   'how.sequenceTitle': 'Последовательности',
   'how.sequenceBody': 'Карты числовых мастей складываются по убыванию, чередуя масти. Готовую последовательность можно переносить целиком.',
@@ -119,9 +107,6 @@ const RU = {
   'win.victory': 'Победа',
   'win.newRank': 'Новый ранг: {rank}',
   'win.assisted': 'Партия с подсказкой',
-  'win.rankReward': '+{count} за ранг',
-  'win.rewardClaimed': 'Награда уже получена',
-  'win.doubleCoins': '×2 монеты',
 
   'error.openDeal': 'Не удалось открыть раздачу',
   'error.newStandard': 'Не удалось начать новую раздачу',
@@ -143,10 +128,8 @@ const EN: Record<TranslationKey, string> = {
   'common.back': 'Back',
   'common.replay': 'Replay',
   'common.loading': 'Loading…',
-  'common.coins': '{count} coins',
-  'common.bonusAd': '+{count} from ad',
 
-  'home.themes': 'Themes',
+  'mastery.title': 'Mastery',
   'home.subtitle': 'Solitaire · path to mastery',
   'home.confirmNewTitle': 'Start a new deal?',
   'home.confirmNewBody': 'The current unfinished game will be replaced.',
@@ -173,9 +156,9 @@ const EN: Record<TranslationKey, string> = {
   'hud.assisted': 'Assisted',
 
   'daily.playToday': 'Play today',
+  'daily.weekdays': 'Mon,Tue,Wed,Thu,Fri,Sat,Sun',
   'daily.playArchive': 'Play archive',
   'daily.notCompleted': 'Not completed yet',
-  'daily.reward': '+{count} coins',
   'daily.streakSummary': 'Streak {current} · best {best}',
   'daily.official': 'Official: {result}',
   'daily.personal': 'Personal: {result}',
@@ -189,7 +172,6 @@ const EN: Record<TranslationKey, string> = {
 
   'mastery.nextRank': 'Until next rank',
   'mastery.maxRank': 'Highest rank reached',
-  'mastery.rankReward': 'Rank reward: +{count} coins',
   'mastery.complete': 'Mastery complete',
   'mastery.maxLine': 'Maximum Mastery rank',
   'mastery.unchanged': 'Mastery unchanged',
@@ -213,14 +195,6 @@ const EN: Record<TranslationKey, string> = {
   'leaderboards.failed': 'Could not load results',
   'leaderboards.player': 'Player',
 
-  'themes.title': 'Themes',
-  'themes.buyCoins': 'Buy coins',
-  'themes.purchasesUnavailable': 'Purchases are unavailable',
-  'themes.purchasing': 'Purchasing…',
-  'themes.active': 'In use',
-  'themes.owned': 'In collection',
-  'themes.locked': 'Locked',
-  'themes.apply': 'Apply',
 
   'how.sequenceTitle': 'Sequences',
   'how.sequenceBody': 'Number suits stack in descending order while alternating suits. A complete sequence can be moved as one unit.',
@@ -249,9 +223,6 @@ const EN: Record<TranslationKey, string> = {
   'win.victory': 'Victory',
   'win.newRank': 'New rank: {rank}',
   'win.assisted': 'Assisted game',
-  'win.rankReward': '+{count} rank reward',
-  'win.rewardClaimed': 'Reward already claimed',
-  'win.doubleCoins': '×2 coins',
 
   'error.openDeal': 'Could not open the deal',
   'error.newStandard': 'Could not start a new deal',
@@ -289,10 +260,6 @@ const MONTHS: Readonly<Record<AppLanguage, readonly string[]>> = {
   en: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
 };
 
-const THEMES: Readonly<Record<AppLanguage, Readonly<Record<ThemeId, string>>>> = {
-  ru: { base: 'Классика', launch_01: 'Тема 1', launch_02: 'Тема 2', launch_03: 'Тема 3', launch_04: 'Тема 4', launch_05: 'Тема 5', launch_06: 'Тема 6' },
-  en: { base: 'Classic', launch_01: 'Theme 1', launch_02: 'Theme 2', launch_03: 'Theme 3', launch_04: 'Theme 4', launch_05: 'Theme 5', launch_06: 'Theme 6' },
-};
 
 export function tr(
   language: AppLanguage,
@@ -326,9 +293,6 @@ export function monthName(language: AppLanguage, month: number): string {
   return MONTHS[language][month - 1] ?? '';
 }
 
-export function themeDisplayName(language: AppLanguage, id: ThemeId): string {
-  return THEMES[language][id];
-}
 
 export function formatMoveCount(language: AppLanguage, moves: number): string {
   const value = Math.max(0, Math.floor(moves));

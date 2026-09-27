@@ -1,0 +1,3 @@
+import type { VisualQaFixtureFactory } from './types.ts'; import { activeStandardForPose, baseFixture, type GamePose } from './helpers.ts';
+const poses:readonly GamePose[]=['short-columns','long-columns','free-cells-full','dragons-red-ready','dragons-green-ready','dragons-white-ready','auto-collect','hint','win'];
+export const gameFixtures:Readonly<Record<string,VisualQaFixtureFactory>>=Object.fromEntries(poses.map((pose)=>[`game-${pose}`,()=>{const f=baseFixture(`game-${pose}`,'GameScene');return{...f,activeGame:activeStandardForPose(pose),gamePose:pose,sceneData:{mode:'resume-standard'}};}])) as Readonly<Record<string,VisualQaFixtureFactory>>;

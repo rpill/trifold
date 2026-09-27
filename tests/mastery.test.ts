@@ -1,42 +1,36 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createDefaultProfile } from '../src/meta/profile/ProfileSchema.ts';
-import {
-  getMasteryRequirements,
-  recordMasteryEligibleStandardWin,
-} from '../src/meta/mastery/Mastery.ts';
+import { createDefaultMetaSave } from '../src/meta/MetaSave.ts';
+import { getMasteryRequirements, recordMasteryEligibleDailyWin, recordMasteryEligibleStandardWin } from '../src/meta/mastery/Mastery.ts';
 
-test('Mastery requirements match approved stage-local ladder', () => {
-  assert.deepEqual(getMasteryRequirements('novice'), { anyWins: 10, mediumWins: 0, hardWins: 0, onTimeDailyWins: 0, rewardCoins: 100 });
-  assert.deepEqual(getMasteryRequirements('player'), { anyWins: 0, mediumWins: 15, hardWins: 3, onTimeDailyWins: 0, rewardCoins: 150 });
-  assert.deepEqual(getMasteryRequirements('tactician'), { anyWins: 0, mediumWins: 25, hardWins: 10, onTimeDailyWins: 0, rewardCoins: 200 });
-  assert.deepEqual(getMasteryRequirements('expert'), { anyWins: 0, mediumWins: 0, hardWins: 25, onTimeDailyWins: 5, rewardCoins: 300 });
-  assert.deepEqual(getMasteryRequirements('master'), { anyWins: 0, mediumWins: 0, hardWins: 60, onTimeDailyWins: 15, rewardCoins: 500 });
+test('Mastery requirements match Cascade ladder', () => {
+  assert.deepEqual(getMasteryRequirements('novice'), { anyWins:10, mediumWins:0, hardWins:0, onTimeDailyWins:0 });
+  assert.deepEqual(getMasteryRequirements('player'), { anyWins:0, mediumWins:15, hardWins:3, onTimeDailyWins:0 });
+  assert.deepEqual(getMasteryRequirements('tactician'), { anyWins:0, mediumWins:25, hardWins:10, onTimeDailyWins:0 });
+  assert.deepEqual(getMasteryRequirements('expert'), { anyWins:0, mediumWins:0, hardWins:25, onTimeDailyWins:5 });
+  assert.deepEqual(getMasteryRequirements('master'), { anyWins:0, mediumWins:0, hardWins:60, onTimeDailyWins:15 });
   assert.equal(getMasteryRequirements('grandmaster'), null);
 });
 
-test('promotion advances exactly one rank, pays once and resets stage', () => {
-  const profile = createDefaultProfile();
-  let current = profile;
-  for (let seed = 1; seed <= 10; seed += 1) {
-    current = recordMasteryEligibleStandardWin(current, { seed, difficulty: 'easy' }).profile;
-  }
-  assert.equal(current.mastery.rank, 'player');
-  assert.deepEqual(current.mastery.stage, { anyWins: 0, mediumWins: 0, hardWins: 0, onTimeDailyWins: 0 });
-  assert.equal(current.coins, 100);
-  assert.ok(current.claimedRewardKeys.includes('mastery-rank:player'));
+test('Standard credit is idempotent and promotion resets stage exactly once', () => {
+  let state=createDefaultMetaSave();
+  for(let seed=1;seed<=10;seed+=1) state=recordMasteryEligibleStandardWin(state,{seed,difficulty:'easy'}).state;
+  assert.equal(state.mastery.rank,'player');
+  assert.deepEqual(state.mastery.stage,{anyWins:0,mediumWins:0,hardWins:0,onTimeDailyWins:0});
+  const first=recordMasteryEligibleStandardWin(state,{seed:42,difficulty:'hard'}).state;
+  const second=recordMasteryEligibleStandardWin(first,{seed:42,difficulty:'hard'}).state;
+  assert.equal(second.mastery.stage.hardWins,1);
+  assert.deepEqual(second.standard.masteryCreditedSeeds.slice(-1),[42]);
 });
 
-test('same Standard seed cannot credit a later Mastery stage twice', () => {
-  const profile = {
-    ...createDefaultProfile(),
-    mastery: {
-      rank: 'player' as const,
-      stage: { anyWins: 0, mediumWins: 0, hardWins: 0, onTimeDailyWins: 0 },
-    },
-  };
-  const first = recordMasteryEligibleStandardWin(profile, { seed: 42, difficulty: 'hard' }).profile;
-  const second = recordMasteryEligibleStandardWin(first, { seed: 42, difficulty: 'hard' }).profile;
-  assert.equal(second.mastery.stage.hardWins, 1);
-  assert.deepEqual(second.masteryCreditedStandardSeeds, [42]);
+test('Daily credit only records lifetime on-time input and stage credit when applicable', () => {
+  const base=createDefaultMetaSave();
+  const expert={...base,mastery:{rank:'expert' as const,stage:{anyWins:0,mediumWins:0,hardWins:25,onTimeDailyWins:4}}};
+  const promoted=recordMasteryEligibleDailyWin(expert,'2026-09-14',true);
+  assert.equal(promoted.rankAdvancedTo,'master');
+  assert.deepEqual(promoted.state.futurePrestige.onTimeDailyDates,['2026-09-14']);
+  const duplicate=recordMasteryEligibleDailyWin(promoted.state,'2026-09-14',true);
+  assert.equal(duplicate.masteryAdvanced,false);
+  const late=recordMasteryEligibleDailyWin(promoted.state,'2026-09-15',false);
+  assert.deepEqual(late.state.futurePrestige.onTimeDailyDates,['2026-09-14']);
 });

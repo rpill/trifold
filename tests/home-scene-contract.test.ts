@@ -4,26 +4,25 @@ import { readFileSync } from 'node:fs';
 
 const scene = readFileSync(new URL('../src/ui/scenes/HomeScene.ts', import.meta.url), 'utf8');
 
-test('HomeScene uses the frozen dashboard geometry instead of a vertical menu', () => {
+test('HomeScene keeps the frozen dashboard geometry and primary product cards', () => {
   for (const required of [
     'extends BaseUiScene', 'computeHomeLayout', 'ActionCard', 'SegmentedControl',
-    'continuePrimary', 'newDealRow', 'daily', 'mastery', 'themes', 'serviceActions', 'coinPill',
+    'continuePrimary', 'difficultySelector', 'newDealAction', 'daily', 'mastery', 'leaders', 'serviceActions',
     'UI_TOKENS.asset.homeBackground',
   ]) assert.ok(scene.includes(required), `expected HomeScene to include ${required}`);
-  assert.equal(scene.includes('How to Play ActionCard'), false);
 });
 
-test('Home primary action resumes the save or starts selected difficulty directly', () => {
-  assert.ok(scene.includes("mode: 'resume-standard'"));
-  assert.ok(scene.includes("mode: 'new-standard'"));
-  assert.ok(scene.includes('selectedStandardDifficulty'));
-});
-
-
-test('Home separates Continue from starting a selected new difficulty when a save exists', () => {
+test('Home Standard actions and selected difficulty are routed through TrifoldProductBridge', () => {
   for (const required of [
-    'newDeal', 'startSelectedStandard', 'confirmNewDeal', 'selectedStandardDifficulty',
+    'productBridge.snapshot()', 'productBridge.resumeGame()', 'productBridge.startStandard', 'productBridge.setStandardDifficulty',
   ]) assert.ok(scene.includes(required), `expected HomeScene to include ${required}`);
-  assert.ok(scene.includes("mode: 'resume-standard'"));
-  assert.ok(scene.includes("mode: 'new-standard'"));
+  assert.equal(scene.includes('runtime.repository'), false);
+  assert.equal(scene.includes('getRuntimeServices().repository'), false);
+});
+
+test('Home has one Leaders destination and no themes or coin UI', () => {
+  assert.ok(scene.includes("this.navigation?.go('leaderboards')"));
+  assert.equal(scene.includes("go('themes')"), false);
+  assert.equal(scene.includes('CoinPill'), false);
+  assert.equal((scene.match(/go\('leaderboards'\)/g) ?? []).length, 1);
 });

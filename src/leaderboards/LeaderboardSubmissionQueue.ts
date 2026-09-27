@@ -1,53 +1,84 @@
-export interface LeaderboardSubmissionQueueOptions {
-  readonly minScoreIntervalMs?: number;
-  readonly now?: () => number;
-  readonly sleep?: (ms: number) => Promise<void>;
-}
+export type LeaderboardSubmit = (technicalName: string, score: number) => Promise<void>;
+export type LeaderboardDelay = (ms: number) => Promise<void>;
+export type LeaderboardNow = () => number;
+type CoalescePolicy = 'max' | 'latest';
+interface PendingWaiter { resolve(): void; reject(error: unknown): void }
+interface PendingWrite { score: number; policy: CoalescePolicy; waiters: PendingWaiter[] }
+const defaultDelay: LeaderboardDelay = async (ms) => { await new Promise<void>((resolve) => setTimeout(resolve, ms)); };
 
 export class LeaderboardSubmissionQueue {
-  private readonly tails = new Map<string, Promise<void>>();
-  private readonly minScoreIntervalMs: number;
-  private readonly now: () => number;
-  private readonly sleep: (ms: number) => Promise<void>;
-  private scoreTail: Promise<void> = Promise.resolve();
-  private nextScoreAt = 0;
+  private readonly pending = new Map<string, PendingWrite>();
+  private drainScheduled = false;
+  private draining = false;
+  private activeWrites = 0;
+  private lastSubmitAt: number | null = null;
+  private readonly submit: LeaderboardSubmit;
+  private readonly delay: LeaderboardDelay;
+  private readonly now: LeaderboardNow;
+  private readonly minIntervalMs: number;
 
-  constructor(options: LeaderboardSubmissionQueueOptions = {}) {
-    this.minScoreIntervalMs = Math.max(0, Math.floor(options.minScoreIntervalMs ?? 1000));
-    this.now = options.now ?? (() => Date.now());
-    this.sleep = options.sleep ?? ((ms) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
+  constructor(
+    submit: LeaderboardSubmit,
+    delay: LeaderboardDelay = defaultDelay,
+    now: LeaderboardNow = () => Date.now(),
+    minIntervalMs = 1100,
+  ) {
+    this.submit = submit;
+    this.delay = delay;
+    this.now = now;
+    this.minIntervalMs = minIntervalMs;
+    if (!Number.isFinite(minIntervalMs) || minIntervalMs < 0) throw new Error('Leaderboard submit interval must be finite and non-negative.');
   }
 
-  run<T>(key: string, task: () => Promise<T>): Promise<T> {
-    const previous = this.tails.get(key) ?? Promise.resolve();
-    const run = previous.then(task, task);
-    const tail = run.then(() => undefined, () => undefined);
-    this.tails.set(key, tail);
-    void tail.finally(() => {
-      if (this.tails.get(key) === tail) this.tails.delete(key);
+  get pendingCount(): number { return this.pending.size + this.activeWrites; }
+
+  enqueue(technicalName: string, score: number, policy: CoalescePolicy = 'max'): Promise<void> {
+    if (!Number.isFinite(score) || score <= 0) return Promise.reject(new Error('Leaderboard score must be finite and positive.'));
+    const promise = new Promise<void>((resolve, reject) => {
+      const existing = this.pending.get(technicalName);
+      if (existing) {
+        existing.score = policy === 'latest' ? score : Math.max(existing.score, score);
+        existing.policy = policy;
+        existing.waiters.push({ resolve, reject });
+      } else {
+        this.pending.set(technicalName, { score, policy, waiters: [{ resolve, reject }] });
+      }
     });
-    return run;
+    this.scheduleDrain();
+    return promise;
   }
 
-  runScore<T>(task: () => Promise<T>): Promise<T> {
-    const run = this.scoreTail.then(async () => {
-      const waitMs = Math.max(0, this.nextScoreAt - this.now());
-      if (waitMs > 0) await this.sleep(waitMs);
-      try {
-        return await task();
-      } finally {
-        this.nextScoreAt = this.now() + this.minScoreIntervalMs;
+  private scheduleDrain(): void {
+    if (this.drainScheduled || this.draining) return;
+    this.drainScheduled = true;
+    queueMicrotask(() => { this.drainScheduled = false; void this.drain(); });
+  }
+
+  private async drain(): Promise<void> {
+    if (this.draining) return;
+    this.draining = true;
+    try {
+      while (this.pending.size > 0) {
+        const next = this.pending.entries().next().value as [string, PendingWrite] | undefined;
+        if (!next) break;
+        const [technicalName, pending] = next;
+        this.pending.delete(technicalName);
+        this.activeWrites += 1;
+        try {
+          if (this.lastSubmitAt !== null) {
+            const waitMs = Math.max(0, this.minIntervalMs - (this.now() - this.lastSubmitAt));
+            if (waitMs > 0) await this.delay(waitMs);
+          }
+          this.lastSubmitAt = this.now();
+          await this.submit(technicalName, pending.score);
+          for (const waiter of pending.waiters) waiter.resolve();
+        } catch (error) {
+          for (const waiter of pending.waiters) waiter.reject(error);
+        } finally { this.activeWrites -= 1; }
       }
-    }, async () => {
-      const waitMs = Math.max(0, this.nextScoreAt - this.now());
-      if (waitMs > 0) await this.sleep(waitMs);
-      try {
-        return await task();
-      } finally {
-        this.nextScoreAt = this.now() + this.minScoreIntervalMs;
-      }
-    });
-    this.scoreTail = run.then(() => undefined, () => undefined);
-    return run;
+    } finally {
+      this.draining = false;
+      if (this.pending.size > 0) this.scheduleDrain();
+    }
   }
 }

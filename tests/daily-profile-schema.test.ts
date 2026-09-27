@@ -19,7 +19,6 @@ test('profile parser accepts Daily history and a matching Daily active save', ()
           completedOnTime: true,
           officialResult: { moves: 42, activeMs: 300_000 },
           personalBest: { moves: 40, activeMs: 290_000 },
-          firstCompletionRewardClaimed: true,
         },
       },
       active: {
@@ -45,7 +44,7 @@ test('profile parser rejects malformed Daily dates and seed/save mismatch', () =
     ...profile,
     daily: { ...profile.daily, history: { nope: {
       dateKey: 'nope', completed: true, completedOnTime: false, officialResult: null,
-      personalBest: { moves: 1, activeMs: 1 }, firstCompletionRewardClaimed: true,
+      personalBest: { moves: 1, activeMs: 1 },
     } } },
   }), /date/i);
   assert.throws(() => parsePlayerProfile({

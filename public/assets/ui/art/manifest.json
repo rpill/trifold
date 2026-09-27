@@ -1,0 +1,37 @@
+{
+  "paper-landscape.webp": {
+    "bytes": 207332,
+    "size": [
+      1536,
+      1024
+    ]
+  },
+  "material.webp": {
+    "bytes": 134,
+    "size": [
+      192,
+      192
+    ]
+  },
+  "paper-grain.webp": {
+    "bytes": 286,
+    "size": [
+      256,
+      256
+    ]
+  },
+  "jade-landscape.webp": {
+    "bytes": 193098,
+    "size": [
+      1536,
+      1024
+    ]
+  },
+  "table-grain.webp": {
+    "bytes": 624,
+    "size": [
+      512,
+      512
+    ]
+  }
+}

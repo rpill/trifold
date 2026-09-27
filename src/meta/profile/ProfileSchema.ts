@@ -1,7 +1,5 @@
 import { parseTrifoldGameSave } from '../../game/model/TrifoldGame.ts';
 import { parseDateKey } from '../daily/DailyDate.ts';
-import { BASE_THEME_ID, getLaunchThemes, isThemeId } from '../../theme/ThemeCatalog.ts';
-import type { ThemeId } from '../../theme/ThemeDefinition.ts';
 import { parseLanguageOverride } from '../../i18n/Language.ts';
 import type {
   AttemptRecord,
@@ -206,10 +204,6 @@ function parseDaily(value: unknown): PlayerProfileV1['daily'] {
     const completedOnTime = booleanValue(entry.completedOnTime, `daily.history.${key}.completedOnTime`);
     const officialResult = parseNullableAttempt(entry.officialResult, `daily.history.${key}.officialResult`);
     const personalBest = parseNullableAttempt(entry.personalBest, `daily.history.${key}.personalBest`);
-    const firstCompletionRewardClaimed = booleanValue(
-      entry.firstCompletionRewardClaimed,
-      `daily.history.${key}.firstCompletionRewardClaimed`,
-    );
     if (completed && personalBest === null) throw new Error(`daily.history.${key} completed entry requires personalBest.`);
     if (completedOnTime && officialResult === null) throw new Error(`daily.history.${key} on-time entry requires officialResult.`);
     if (!completedOnTime && officialResult !== null) throw new Error(`daily.history.${key} late entry cannot have officialResult.`);
@@ -219,7 +213,6 @@ function parseDaily(value: unknown): PlayerProfileV1['daily'] {
       completedOnTime,
       officialResult,
       personalBest,
-      firstCompletionRewardClaimed,
     };
   }
   return {
@@ -244,10 +237,6 @@ export function createDefaultProfile(): PlayerProfileV1 {
     },
     futurePrestige: { mediumSeeds: [], hardSeeds: [], onTimeDailyDates: [] },
     daily: { history: {}, active: null, bestStreak: 0 },
-    coins: 0,
-    claimedRewardKeys: [],
-    ownedThemeIds: ['base'],
-    activeThemeId: 'base',
     tutorialCompleted: false,
     settings: { sfxEnabled: true, language: null },
   };
@@ -259,18 +248,6 @@ export function parsePlayerProfile(raw: unknown): PlayerProfileV1 {
   const mastery = record(source.mastery, 'mastery');
   const futurePrestige = record(source.futurePrestige, 'futurePrestige');
   const settings = record(source.settings, 'settings');
-  const persistedThemeIds = Array.isArray(source.ownedThemeIds) ? source.ownedThemeIds : [];
-  const persistedOwned = new Set<ThemeId>();
-  for (const value of persistedThemeIds) {
-    if (isThemeId(value)) persistedOwned.add(value);
-  }
-  persistedOwned.add(BASE_THEME_ID);
-  const ownedThemeIds = getLaunchThemes()
-    .map((theme) => theme.id)
-    .filter((id) => persistedOwned.has(id));
-  const requestedActiveThemeId = isThemeId(source.activeThemeId) ? source.activeThemeId : BASE_THEME_ID;
-  const activeThemeId = ownedThemeIds.includes(requestedActiveThemeId) ? requestedActiveThemeId : BASE_THEME_ID;
-
   return {
     version: 1,
     selectedStandardDifficulty: parseDifficulty(source.selectedStandardDifficulty),
@@ -289,10 +266,6 @@ export function parsePlayerProfile(raw: unknown): PlayerProfileV1 {
       onTimeDailyDates: uniqueStrings(futurePrestige.onTimeDailyDates, 'futurePrestige.onTimeDailyDates'),
     },
     daily: parseDaily(source.daily),
-    coins: nonNegativeInteger(source.coins, 'coins'),
-    claimedRewardKeys: uniqueStrings(source.claimedRewardKeys, 'claimedRewardKeys'),
-    ownedThemeIds,
-    activeThemeId,
     tutorialCompleted: booleanValue(source.tutorialCompleted, 'tutorialCompleted'),
     settings: {
       sfxEnabled: booleanValue(settings.sfxEnabled, 'settings.sfxEnabled'),

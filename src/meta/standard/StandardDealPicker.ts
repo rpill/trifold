@@ -1,5 +1,5 @@
 import type { VerifiedDealCatalog, StandardTier } from '../../game/model/VerifiedDealCatalog.ts';
-import type { StandardDifficulty, StandardPartition } from '../profile/ProfileTypes.ts';
+import type { StandardDifficulty, StandardPartition } from '../MetaSave.ts';
 
 export interface StandardDealSelection {
   readonly seed: number;

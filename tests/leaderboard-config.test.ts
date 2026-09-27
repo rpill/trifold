@@ -4,14 +4,20 @@ import {
   DAILY_LEADERBOARD_NAME,
   STREAK_LEADERBOARD_NAME,
   MASTERY_LEADERBOARD_NAME,
-  encodeDailyScore,
   decodeDailyScore,
+  decodeDailyLeaderboardScore,
+  decodeMasteryScore,
+  decodeStreakScore,
+  encodeDailyScore,
+  encodeDailyLeaderboardScore,
   encodeMasteryScore,
   encodeStreakScore,
+  getLeaderboardName,
+  lifetimeMasteryPoints,
 } from '../src/leaderboards/LeaderboardConfig.ts';
-import { createDefaultProfile } from '../src/meta/profile/ProfileSchema.ts';
+import { createDefaultMetaSave } from '../src/meta/MetaSave.ts';
 
-test('daily encoding sorts later date first, then fewer moves, then faster time', () => {
+test('daily encoding isolates dates then sorts fewer moves before faster time', () => {
   const slowFew = encodeDailyScore(10, 20, 90000);
   const fastMore = encodeDailyScore(10, 21, 1000);
   assert.ok(slowFew > fastMore);
@@ -20,26 +26,42 @@ test('daily encoding sorts later date first, then fewer moves, then faster time'
   assert.deepEqual(decodeDailyScore(encodeDailyScore(10, 20, 1234)), { dailyOffset: 10, moves: 20, activeMs: 1234 });
 });
 
-test('daily encoding validates bounds and stays safe through final schedule day', () => {
-  const score = encodeDailyScore(7304, 9999, 99_999_999);
-  assert.equal(Number.isSafeInteger(score), true);
-  for (const [moves, activeMs] of [[0, 1], [10000, 1], [1, 0], [1, 100_000_000]]) {
-    assert.throws(() => encodeDailyScore(0, moves, activeMs));
-  }
+
+test('date-key Daily leaderboard helpers preserve date isolation', () => {
+  const score = encodeDailyLeaderboardScore('2026-09-16', 40, 80000);
+  assert.deepEqual(decodeDailyLeaderboardScore(score), { dailyId: '2026-09-16', moves: 40, elapsedMs: 80000 });
+  assert.ok(encodeDailyLeaderboardScore('2026-09-17', 9999, 99_999_999) > encodeDailyLeaderboardScore('2026-09-16', 1, 1));
+  assert.throws(() => encodeDailyLeaderboardScore('bad', 10, 1000));
 });
 
-test('streak and Mastery scores use approved ranking weights', () => {
-  assert.equal(encodeStreakScore(12), 12);
-  const profile = {
-    ...createDefaultProfile(),
-    mastery: { rank: 'expert' as const, stage: { anyWins: 0, mediumWins: 0, hardWins: 3, onTimeDailyWins: 1 } },
-    futurePrestige: { mediumSeeds: [1, 2], hardSeeds: [3, 4], onTimeDailyDates: ['2026-09-14'] },
+test('streak encoding round-trips current and best with monotonic current priority', () => {
+  const score = encodeStreakScore(12, 18);
+  assert.deepEqual(decodeStreakScore(score), { current: 12, best: 18 });
+  assert.ok(encodeStreakScore(13, 13) > encodeStreakScore(12, 99));
+  assert.throws(() => encodeStreakScore(5, 4));
+});
+
+test('Mastery points use unique Trifold credited inputs with approved weights', () => {
+  const base = createDefaultMetaSave();
+  const meta = {
+    ...base,
+    standard: {
+      ...base.standard,
+      completed: { onboarding: [1, 1], easy: [2, 2, 3], medium: [4, 4], hard: [5] },
+    },
+    futurePrestige: { mediumSeeds: [], hardSeeds: [], onTimeDailyDates: ['2026-09-14', '2026-09-14'] },
+    mastery: { rank: 'expert' as const, stage: base.mastery.stage },
   };
-  assert.equal(encodeMasteryScore(profile), 4_000_000_000 + 13);
+  assert.equal(lifetimeMasteryPoints(meta), 1 + 2 + 2 + 3 + 2);
+  const encoded = encodeMasteryScore(meta);
+  assert.deepEqual(decodeMasteryScore(encoded), { rank: 'expert', points: 10 });
 });
 
-test('technical leaderboard names are stable release constants', () => {
+test('technical names and generic lookup remain Trifold-specific', () => {
   assert.equal(DAILY_LEADERBOARD_NAME, 'trifolddaily');
   assert.equal(STREAK_LEADERBOARD_NAME, 'trifoldstreak');
   assert.equal(MASTERY_LEADERBOARD_NAME, 'trifoldmastery');
+  assert.equal(getLeaderboardName('daily'), DAILY_LEADERBOARD_NAME);
+  assert.equal(getLeaderboardName('streak'), STREAK_LEADERBOARD_NAME);
+  assert.equal(getLeaderboardName('mastery'), MASTERY_LEADERBOARD_NAME);
 });

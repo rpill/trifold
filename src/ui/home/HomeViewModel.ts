@@ -1,18 +1,16 @@
 import { getMasteryRequirements } from '../../meta/mastery/Mastery.ts';
 import { deriveCurrentStreak } from '../../meta/daily/DailyHistory.ts';
-import { toLocalDateKey } from '../../meta/daily/DailyDate.ts';
-import type { MasteryRank, MasteryStageProgress, PlayerProfileV1, StandardDifficulty } from '../../meta/profile/ProfileTypes.ts';
+import type { MasteryRank, MasteryStageProgress, StandardDifficulty } from '../../meta/MetaSave.ts';
 import type { AppLanguage } from '../../i18n/Language.ts';
 import { difficultyLabel, rankLabel, tr } from '../../i18n/Localization.ts';
+import type { TrifoldProductSnapshot } from '../bridge/TrifoldProductBridge.ts';
 
 export interface HomeViewModel {
-  readonly primary: { readonly title: string; readonly subtitle: string; readonly difficulty: StandardDifficulty; readonly hasSave: boolean };
+  readonly primary: { readonly title: string; readonly subtitle: string; readonly difficulty: StandardDifficulty; readonly hasActiveGame: boolean };
   readonly newDeal: { readonly title: string; readonly subtitle: string; readonly difficulty: StandardDifficulty };
   readonly daily: { readonly title: string; readonly subtitle: string; readonly enabled: boolean };
   readonly mastery: { readonly rank: MasteryRank; readonly title: string; readonly subtitle: string; readonly enabled: boolean };
-  readonly themes: { readonly owned: number; readonly total: 7; readonly subtitle: string; readonly enabled: boolean };
-  readonly coins: number;
-  readonly leaderboardsEnabled: boolean;
+  readonly leaders: { readonly title: string; readonly subtitle: string; readonly enabled: boolean };
 }
 
 function masterySummary(rank: MasteryRank, stage: MasteryStageProgress, language: AppLanguage): string {
@@ -26,50 +24,49 @@ function masterySummary(rank: MasteryRank, stage: MasteryStageProgress, language
   return parts.join(' · ');
 }
 
-export function buildHomeViewModel(
-  profile: PlayerProfileV1,
-  todayKey = toLocalDateKey(new Date()),
-  leaderboardsEnabled = false,
-  language: AppLanguage = 'ru',
-): HomeViewModel {
-  const saved = profile.activeStandard;
-  const primaryDifficulty = saved?.difficulty ?? profile.selectedStandardDifficulty;
-  const streak = deriveCurrentStreak(profile.daily.history, todayKey);
-  const today = profile.daily.history[todayKey];
+export function buildHomeViewModel(snapshot: TrifoldProductSnapshot, language: AppLanguage = 'ru'): HomeViewModel {
+  const selected = snapshot.state.standard.selectedDifficulty;
+  const hasActiveGame = snapshot.activeMode !== null;
+  const primaryDifficulty = snapshot.activeMode === 'standard' ? snapshot.activeDifficulty ?? selected : selected;
+  const primarySubtitle = snapshot.activeMode === 'daily'
+    ? 'Daily'
+    : `Standard · ${difficultyLabel(language, primaryDifficulty)}`;
+  const todayKey = snapshot.currentDailyId;
+  const streak = todayKey ? deriveCurrentStreak(snapshot.state.daily.records, todayKey) : 0;
+  const today = todayKey ? snapshot.state.daily.records[todayKey] : undefined;
+  const activeToday = todayKey !== null && snapshot.activeMode === 'daily' && snapshot.activeDailyId === todayKey;
+
   return {
     primary: {
-      title: tr(language, saved ? 'common.continue' : 'common.play'),
-      subtitle: `Standard · ${difficultyLabel(language, primaryDifficulty)}`,
+      title: tr(language, hasActiveGame ? 'common.continue' : 'common.play'),
+      subtitle: primarySubtitle,
       difficulty: primaryDifficulty,
-      hasSave: saved !== null,
+      hasActiveGame,
     },
     newDeal: {
       title: tr(language, 'common.newDeal'),
-      subtitle: `Standard · ${difficultyLabel(language, profile.selectedStandardDifficulty)}`,
-      difficulty: profile.selectedStandardDifficulty,
+      subtitle: `Standard · ${difficultyLabel(language, selected)}`,
+      difficulty: selected,
     },
     daily: {
       title: 'Daily',
       subtitle: today?.completed
         ? tr(language, 'home.dailyCompleted', { streak })
-        : profile.daily.active?.dailyDateKey === todayKey
+        : activeToday
           ? tr(language, 'home.dailyContinue', { streak })
           : tr(language, 'home.dailyNew', { streak }),
-      enabled: true,
+      enabled: todayKey !== null,
     },
     mastery: {
-      rank: profile.mastery.rank,
-      title: rankLabel(language, profile.mastery.rank),
-      subtitle: masterySummary(profile.mastery.rank, profile.mastery.stage, language),
+      rank: snapshot.state.mastery.rank,
+      title: rankLabel(language, snapshot.state.mastery.rank),
+      subtitle: masterySummary(snapshot.state.mastery.rank, snapshot.state.mastery.stage, language),
       enabled: true,
     },
-    themes: {
-      owned: profile.ownedThemeIds.length,
-      total: 7,
-      subtitle: `${profile.ownedThemeIds.length} / 7`,
+    leaders: {
+      title: tr(language, 'leaderboards.title'),
+      subtitle: tr(language, snapshot.leaderboardsEnabled ? 'leaderboards.top' : 'leaderboards.unavailable'),
       enabled: true,
     },
-    coins: profile.coins,
-    leaderboardsEnabled,
   };
 }

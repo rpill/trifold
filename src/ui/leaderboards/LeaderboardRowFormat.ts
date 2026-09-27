@@ -1,31 +1,23 @@
 import type { AppLanguage } from '../../i18n/Language.ts';
 import { formatMoveCount, rankLabel } from '../../i18n/Localization.ts';
-import { decodeMasteryScore } from '../../leaderboards/LeaderboardConfig.ts';
-import type { DailyLeaderboardEntry } from '../../leaderboards/LeaderboardService.ts';
-import type { LeaderboardEntry } from '../../platform/services.ts';
+import type { LeaderboardRow } from '../../leaderboards/LeaderboardService.ts';
 import { formatActiveTime } from '../game/GameHudViewModel.ts';
 
 export type LeaderboardDisplayTab = 'daily' | 'streak' | 'mastery';
 
-function isDailyEntry(entry: LeaderboardEntry): entry is DailyLeaderboardEntry {
-  const candidate = entry as Partial<DailyLeaderboardEntry>;
-  return Number.isFinite(candidate.moves) && Number.isFinite(candidate.activeMs);
-}
-
 export function formatLeaderboardValue(
   tab: LeaderboardDisplayTab,
-  entry: LeaderboardEntry,
+  entry: LeaderboardRow,
   language: AppLanguage,
 ): string {
   if (tab === 'daily') {
-    if (!isDailyEntry(entry)) return '—';
-    return `${formatMoveCount(language, entry.moves)} · ${formatActiveTime(entry.activeMs)}`;
+    if (entry.metric.kind !== 'daily') return '—';
+    return `${formatMoveCount(language, entry.metric.moves)} · ${formatActiveTime(entry.metric.elapsedMs)}`;
   }
-  if (tab === 'streak') return String(Math.max(0, Math.floor(entry.score)));
-  try {
-    const mastery = decodeMasteryScore(entry.score);
-    return `${rankLabel(language, mastery.rank)} · ${mastery.points}`;
-  } catch {
-    return '—';
+  if (tab === 'streak') {
+    if (entry.metric.kind !== 'streak') return '—';
+    return String(entry.metric.current);
   }
+  if (entry.metric.kind !== 'mastery') return '—';
+  return `${rankLabel(language, entry.metric.rank)} · ${entry.metric.points}`;
 }

@@ -3,6 +3,7 @@ import type { UiRect } from '../layout/HomeLayout.ts';
 import type { ResolvedUiViewport } from '../layout/UiViewport.ts';
 import { normalizeTouchTarget } from '../layout/UiViewport.ts';
 import { UI_TOKENS } from '../style/UiTokens.ts';
+import { UiSurface } from './UiSurface.ts';
 
 export interface IconButtonState {
   readonly iconKey: string;
@@ -11,7 +12,7 @@ export interface IconButtonState {
 }
 
 export class IconButton {
-  private readonly surface: Phaser.GameObjects.Graphics;
+  private readonly surface: UiSurface;
   private readonly icon: Phaser.GameObjects.Image;
   private readonly zone: Phaser.GameObjects.Zone;
   private readonly onPress: () => void;
@@ -28,7 +29,7 @@ export class IconButton {
     this.viewport = viewport;
     this.state = state;
     this.onPress = onPress;
-    this.surface = scene.add.graphics().setDepth(depth);
+    this.surface = new UiSurface(scene, depth);
     this.icon = scene.add.image(0, 0, state.iconKey)
       .setOrigin(0.5)
       .setTint(UI_TOKENS.color.paper)
@@ -37,6 +38,9 @@ export class IconButton {
     this.zone.on('pointerdown', () => {
       if (this.state.enabled) this.onPress();
     });
+    this.zone.input!.cursor = 'pointer';
+    this.zone.on('pointerover', () => { if (this.state.enabled) this.surface.feedback('hover'); });
+    this.zone.on('pointerout', () => this.surface.feedback(this.state.enabled ? 'normal' : 'disabled'));
   }
 
   setState(state: IconButtonState): void {
@@ -54,18 +58,13 @@ export class IconButton {
     const hitX = bounds.x - (hitWidth - bounds.width) / 2;
     const hitY = bounds.y - (hitHeight - bounds.height) / 2;
     const alpha = this.state.enabled ? 1 : 0.38;
-    const fill = this.state.selected ? UI_TOKENS.color.controlActive : UI_TOKENS.color.control;
-    const radius = Math.min(UI_TOKENS.radius.control, bounds.height * 0.24);
-
-    this.surface.clear();
-    this.surface.fillStyle(fill, alpha).fillRoundedRect(bounds.x, bounds.y, bounds.width, bounds.height, radius);
-    this.surface.lineStyle(UI_TOKENS.stroke.thin, UI_TOKENS.color.gold, 0.8 * alpha)
-      .strokeRoundedRect(bounds.x, bounds.y, bounds.width, bounds.height, radius);
+    this.surface.layout(bounds, this.state.selected ? 'gold' : 'jade');
+    this.surface.feedback(this.state.enabled ? 'normal' : 'disabled');
 
     const iconSize = Math.max(16, Math.min(bounds.width, bounds.height) * 0.46);
     this.icon
       .setAlpha(alpha)
-      .setTint(this.state.selected ? UI_TOKENS.color.goldLight : UI_TOKENS.color.paper)
+      .setTint(this.state.selected ? UI_TOKENS.color.ink : UI_TOKENS.color.goldLight)
       .setDisplaySize(iconSize, iconSize)
       .setPosition(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
     this.zone.setPosition(hitX, hitY).setSize(hitWidth, hitHeight);

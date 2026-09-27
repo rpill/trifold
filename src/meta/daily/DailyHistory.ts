@@ -1,27 +1,27 @@
-import type { DailyHistoryEntry } from '../profile/ProfileTypes.ts';
+import type { DailyRecord } from '../MetaSave.ts';
 import { addDays, dateKeyToDayNumber, parseDateKey } from './DailyDate.ts';
 
-export type DailyHistory = Readonly<Record<string, DailyHistoryEntry>>;
+export type DailyHistory = Readonly<Record<string, DailyRecord>>;
 
-function isOnTimeCompletion(entry: DailyHistoryEntry | undefined): boolean {
+function isOnTimeCompletion(entry: DailyRecord | undefined): boolean {
   return entry?.completed === true && entry.completedOnTime;
 }
 
-export function deriveCurrentStreak(history: DailyHistory, todayKey: string): number {
+export function deriveCurrentStreak(records: DailyHistory, todayKey: string): number {
   parseDateKey(todayKey);
-  let cursor = isOnTimeCompletion(history[todayKey]) ? todayKey : addDays(todayKey, -1);
+  let cursor = isOnTimeCompletion(records[todayKey]) ? todayKey : addDays(todayKey, -1);
   let count = 0;
-  while (isOnTimeCompletion(history[cursor])) {
+  while (isOnTimeCompletion(records[cursor])) {
     count += 1;
     cursor = addDays(cursor, -1);
   }
   return count;
 }
 
-export function deriveBestStreak(history: DailyHistory): number {
-  const days = Object.values(history)
-    .filter((entry) => entry.completed && entry.completedOnTime)
-    .map((entry) => dateKeyToDayNumber(entry.dateKey))
+export function deriveBestStreak(records: DailyHistory, floor = 0): number {
+  const days = Object.entries(records)
+    .filter(([, entry]) => entry.completed && entry.completedOnTime)
+    .map(([dateKey]) => dateKeyToDayNumber(dateKey))
     .sort((a, b) => a - b);
   let best = 0;
   let current = 0;
@@ -32,13 +32,14 @@ export function deriveBestStreak(history: DailyHistory): number {
     best = Math.max(best, current);
     previous = day;
   }
-  return best;
+  return Math.max(floor, best);
 }
 
-export function mergeDailyHistoryEntry(
-  history: DailyHistory,
-  entry: DailyHistoryEntry,
-): Readonly<Record<string, DailyHistoryEntry>> {
-  parseDateKey(entry.dateKey);
-  return { ...history, [entry.dateKey]: entry };
+export function mergeDailyRecord(
+  records: DailyHistory,
+  dateKey: string,
+  record: DailyRecord,
+): Readonly<Record<string, DailyRecord>> {
+  parseDateKey(dateKey);
+  return { ...records, [dateKey]: record };
 }

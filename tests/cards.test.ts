@@ -30,3 +30,8 @@ test('each dragon family has four stable copies', () => {
     assert.deepEqual(copies, [1, 2, 3, 4]);
   }
 });
+
+
+test('numeric suit list retains gameplay coins after product reset', () => {
+  assert.deepEqual(NUMERIC_SUITS, ['coins', 'bamboo', 'characters']);
+});

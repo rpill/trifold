@@ -1,13 +1,9 @@
 import { getMasteryRequirements } from '../../meta/mastery/Mastery.ts';
-import type { MasteryRank, StandardDifficulty } from '../../meta/profile/ProfileTypes.ts';
+import type { MasteryRank, StandardDifficulty } from '../../meta/MetaSave.ts';
 import type { StandardWinSettlementResult } from '../../meta/standard/StandardWinSettlement.ts';
 import { formatActiveTime } from '../game/GameHudViewModel.ts';
 import type { AppLanguage } from '../../i18n/Language.ts';
 import { difficultyLabel, formatMoveCount, rankLabel, tr } from '../../i18n/Localization.ts';
-
-const RANK_REWARDS: Readonly<Record<MasteryRank, number>> = {
-  novice: 0, player: 100, tactician: 150, expert: 200, master: 300, grandmaster: 500,
-};
 
 function changedCounterLine(settlement: StandardWinSettlementResult, language: AppLanguage): string | null {
   const before = settlement.masteryBefore; const after = settlement.masteryAfter;
@@ -42,14 +38,12 @@ function irrelevantDifficultyLine(rank: MasteryRank, difficulty: StandardDifficu
 
 export interface StandardWinAttemptViewModelInput { readonly difficulty: StandardDifficulty; readonly moves: number; readonly activeMs: number; readonly assisted: boolean }
 export interface StandardWinViewModel {
-  readonly title: string; readonly difficultyLabel: string; readonly resultLine: string; readonly baseCoins: number; readonly rankRewardCoins: number;
-  readonly masteryLine: string; readonly assistedLabel: string | null; readonly doubleRewardAvailable: boolean;
+  readonly title: string; readonly difficultyLabel: string; readonly resultLine: string;
+  readonly masteryLine: string; readonly assistedLabel: string | null;
 }
 
 export function buildStandardWinViewModel(settlement: StandardWinSettlementResult, attempt: StandardWinAttemptViewModelInput, language: AppLanguage = 'ru'): StandardWinViewModel {
   const rank = settlement.rankAdvancedTo;
-  const baseCoins = Math.max(0, settlement.baseCoinsGranted);
-  const rankRewardCoins = rank ? RANK_REWARDS[rank] : 0;
   let masteryLine = tr(language, 'mastery.unchanged');
   if (attempt.assisted) masteryLine = tr(language, 'mastery.assistedNoCredit');
   else if (rank) masteryLine = `${rankLabel(language, settlement.masteryBefore.rank)} → ${rankLabel(language, rank)}`;
@@ -61,8 +55,7 @@ export function buildStandardWinViewModel(settlement: StandardWinSettlementResul
     title: rank ? tr(language, 'win.newRank', { rank: rankLabel(language, rank) }) : tr(language, 'win.victory'),
     difficultyLabel: difficultyLabel(language, attempt.difficulty),
     resultLine: `${formatMoveCount(language, attempt.moves)} · ${formatActiveTime(attempt.activeMs)}`,
-    baseCoins, rankRewardCoins, masteryLine,
+    masteryLine,
     assistedLabel: attempt.assisted ? tr(language, 'win.assisted') : null,
-    doubleRewardAvailable: settlement.firstCompletion && baseCoins > 0,
   };
 }

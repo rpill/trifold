@@ -1,7 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createDefaultProfile } from '../src/meta/profile/ProfileSchema.ts';
-import type { MasteryRank, PlayerProfileV1 } from '../src/meta/profile/ProfileTypes.ts';
+import { createDefaultMetaSave, type MasteryRank, type MetaSave } from '../src/meta/MetaSave.ts';
 import { buildMasteryViewModel, MASTERY_RANK_ORDER } from '../src/ui/mastery/MasteryViewModel.ts';
 
 const EXPECTED_REQUIREMENTS: Readonly<Record<MasteryRank, readonly [string, number][]>> = {
@@ -14,10 +13,10 @@ const EXPECTED_REQUIREMENTS: Readonly<Record<MasteryRank, readonly [string, numb
 };
 
 for (const rank of MASTERY_RANK_ORDER) {
-  test(`Mastery ${rank} exposes literal stage-local requirements`, () => {
-    const base = createDefaultProfile();
-    const profile: PlayerProfileV1 = { ...base, mastery: { ...base.mastery, rank } };
-    const vm = buildMasteryViewModel(profile);
+  test(`Mastery ${rank} exposes literal stage-local requirements from MetaSave`, () => {
+    const base = createDefaultMetaSave();
+    const state: MetaSave = { ...base, mastery: { ...base.mastery, rank } };
+    const vm = buildMasteryViewModel(state);
     assert.equal(vm.rank, rank);
     assert.deepEqual(vm.requirements.map((item) => [item.key, item.total]), EXPECTED_REQUIREMENTS[rank]);
     assert.equal(vm.path.length, 6);
@@ -25,31 +24,30 @@ for (const rank of MASTERY_RANK_ORDER) {
   });
 }
 
-test('Mastery shows real counters and next rank reward rather than only a percent', () => {
-  const base = createDefaultProfile();
-  const profile: PlayerProfileV1 = {
+test('Mastery shows real MetaSave counters without currency reward state', () => {
+  const base = createDefaultMetaSave();
+  const state: MetaSave = {
     ...base,
     mastery: {
       rank: 'expert',
       stage: { anyWins: 0, mediumWins: 0, hardWins: 18, onTimeDailyWins: 3 },
     },
   };
-  const vm = buildMasteryViewModel(profile);
+  const vm = buildMasteryViewModel(state);
   assert.deepEqual(vm.requirements.map((item) => [item.label, item.current, item.total]), [
     ['Сложные', 18, 25],
     ['Daily', 3, 5],
   ]);
-  assert.equal(vm.nextRewardCoins, 300);
+  assert.equal('nextRewardCoins' in vm, false);
 });
 
-
-test('Mastery view model renders English rank and requirement labels', () => {
-  const base = createDefaultProfile();
-  const profile: PlayerProfileV1 = {
+test('Mastery view model renders English rank and requirement labels from MetaSave', () => {
+  const base = createDefaultMetaSave();
+  const state: MetaSave = {
     ...base,
     mastery: { rank: 'expert', stage: { anyWins: 0, mediumWins: 0, hardWins: 18, onTimeDailyWins: 3 } },
   };
-  const vm = buildMasteryViewModel(profile, 'en');
+  const vm = buildMasteryViewModel(state, 'en');
   assert.equal(vm.rankLabel, 'Expert');
   assert.deepEqual(vm.requirements.map((item) => item.label), ['Hard wins', 'Daily']);
 });

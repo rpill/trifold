@@ -1,5 +1,5 @@
 import { getMasteryRequirements } from '../../meta/mastery/Mastery.ts';
-import type { MasteryRank, MasteryStageProgress, PlayerProfileV1 } from '../../meta/profile/ProfileTypes.ts';
+import type { MasteryRank, MasteryStageProgress, MetaSave } from '../../meta/MetaSave.ts';
 import type { AppLanguage } from '../../i18n/Language.ts';
 import { rankLabel, requirementLabel } from '../../i18n/Localization.ts';
 
@@ -14,11 +14,11 @@ export interface MasteryRequirementViewModel {
 export interface MasteryPathItemViewModel { readonly rank: MasteryRank; readonly label: string; readonly current: boolean; readonly completed: boolean }
 export interface MasteryViewModel {
   readonly rank: MasteryRank; readonly rankLabel: string; readonly requirements: readonly MasteryRequirementViewModel[];
-  readonly nextRewardCoins: number; readonly path: readonly MasteryPathItemViewModel[];
+  readonly path: readonly MasteryPathItemViewModel[];
 }
 
-export function buildMasteryViewModel(profile: PlayerProfileV1, language: AppLanguage = 'ru'): MasteryViewModel {
-  const { rank, stage } = profile.mastery;
+export function buildMasteryViewModel(state: MetaSave, language: AppLanguage = 'ru'): MasteryViewModel {
+  const { rank, stage } = state.mastery;
   const currentIndex = MASTERY_RANK_ORDER.indexOf(rank);
   const requirements = getMasteryRequirements(rank);
   const keys: readonly (keyof MasteryStageProgress)[] = ['anyWins', 'mediumWins', 'hardWins', 'onTimeDailyWins'];
@@ -31,7 +31,6 @@ export function buildMasteryViewModel(profile: PlayerProfileV1, language: AppLan
     rank,
     rankLabel: rankLabel(language, rank),
     requirements: requirementEntries,
-    nextRewardCoins: requirements?.rewardCoins ?? 0,
     path: MASTERY_RANK_ORDER.map((pathRank, index) => ({
       rank: pathRank, label: rankLabel(language, pathRank), current: pathRank === rank, completed: index < currentIndex,
     })),

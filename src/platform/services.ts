@@ -1,17 +1,7 @@
-import {
-  UnavailablePaymentsGateway,
-  UnavailableRewardedAdGateway,
-  type PaymentsGateway,
-  type RewardedAdGateway,
-} from './MonetizationGateways.ts';
-
-export interface KeyValueStorageLike {
-  getItem(key: string): string | null;
-  setItem(key: string, value: string): void;
-}
-
 export interface PlayerStorage {
-  scope(): Promise<string>;
+  scope?(): Promise<string>;
+  loadStrict?(): Promise<unknown>;
+  saveStrict?(data: Record<string, unknown>, flush?: boolean): Promise<void>;
   load(): Promise<unknown>;
   save(data: Record<string, unknown>, flush?: boolean): Promise<void>;
 }
@@ -31,146 +21,159 @@ export interface GameplayMarkup {
 }
 
 export interface PlatformAuth {
-  readonly available: boolean;
   isAuthorized(): boolean;
   requestAuthorization(): Promise<boolean>;
+  onAccountSelectionClosed(listener: () => void): () => void;
 }
 
-export interface LeaderboardEntry {
-  readonly score: number;
+export interface PlatformLeaderboardEntry {
   readonly rank: number;
+  readonly score: number;
+  readonly playerId: string;
   readonly publicName: string;
-  readonly uniqueId: string | null;
-  readonly avatarUrl: string | null;
-  readonly extraData: string;
-}
-
-export interface LeaderboardEntriesResult {
-  readonly entries: readonly LeaderboardEntry[];
-  readonly userRank: number | null;
-}
-
-export interface LeaderboardEntriesOptions {
-  readonly includeUser?: boolean;
-  readonly quantityAround?: number;
-  readonly quantityTop?: number;
+  readonly avatarUrl?: string;
 }
 
 export interface PlatformLeaderboards {
   readonly available: boolean;
-  getEntries(name: string, options?: LeaderboardEntriesOptions): Promise<LeaderboardEntriesResult>;
-  getPlayerEntry(name: string): Promise<LeaderboardEntry | null>;
-  setScore(name: string, score: number, extraData?: string): Promise<void>;
+  getEntries(
+    technicalName: string,
+    options: { readonly quantityTop: number },
+  ): Promise<PlatformLeaderboardEntry[]>;
+  getPlayerEntry(technicalName: string): Promise<PlatformLeaderboardEntry | null>;
+  setScore(technicalName: string, score: number): Promise<void>;
 }
 
-export type PlatformPayments = PaymentsGateway;
-export type PlatformAds = RewardedAdGateway;
+
+
+export interface PlatformAds {
+  readonly available: boolean;
+  showInterstitial(): Promise<boolean>;
+}
 
 export interface PlatformServices {
-  readonly storage: PlayerStorage;
-  readonly clock: TrustedClock;
-  readonly pause: PlatformPause;
-  readonly gameplay: GameplayMarkup;
+  readonly language?: string;
+  readonly playerStorage: PlayerStorage;
+  readonly trustedClock: TrustedClock;
   readonly auth: PlatformAuth;
   readonly leaderboards: PlatformLeaderboards;
-  readonly payments: PlatformPayments;
   readonly ads: PlatformAds;
-  readonly language: string | null;
-  readonly ready: Promise<void>;
-  signalReady(): Promise<void>;
+  readonly platformPause: PlatformPause;
+  readonly gameplay: GameplayMarkup;
+  readonly ready: () => void;
 }
 
-const FALLBACK_STORAGE_KEY = 'trifoldPlatformStorage';
-
-class BrowserPlayerStorage implements PlayerStorage {
-  private memory: Record<string, unknown> = {};
-  private readonly storage: KeyValueStorageLike | null;
-
-  constructor(storage: KeyValueStorageLike | null) {
-    this.storage = storage;
-  }
-
-  async scope(): Promise<string> {
-    return 'guest';
-  }
-
-  async load(): Promise<unknown> {
-    try {
-      const raw = this.storage?.getItem(FALLBACK_STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
-          this.memory = structuredClone(parsed as Record<string, unknown>);
-        }
-      }
-    } catch {
-      // Keep last valid in-memory payload.
-    }
-    return structuredClone(this.memory);
-  }
-
-  async save(data: Record<string, unknown>, _flush = false): Promise<void> {
-    this.memory = structuredClone(data);
-    try {
-      this.storage?.setItem(FALLBACK_STORAGE_KEY, JSON.stringify(this.memory));
-    } catch {
-      // Browser storage is an optional fallback only.
-    }
-  }
+export interface BrowserStorageLike {
+  getItem(key: string): string | null;
+  setItem(key: string, value: string): void;
 }
 
-class UnavailableAuth implements PlatformAuth {
-  readonly available = false;
-  isAuthorized(): boolean { return false; }
-  async requestAuthorization(): Promise<boolean> { return false; }
+const PLAYER_DATA_KEY = 'trifoldPlayerData';
+
+function cloneData(data: Record<string, unknown>): Record<string, unknown> {
+  return structuredClone(data);
 }
 
-class UnavailableLeaderboards implements PlatformLeaderboards {
-  readonly available = false;
-  async getEntries(_name: string, _options?: LeaderboardEntriesOptions): Promise<LeaderboardEntriesResult> {
-    return { entries: [], userRank: null };
-  }
-  async getPlayerEntry(_name: string): Promise<LeaderboardEntry | null> { return null; }
-  async setScore(_name: string, _score: number, _extraData?: string): Promise<void> {}
+function isPlayerData(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-class StaticClock implements TrustedClock {
-  nowMs(): number | null { return null; }
-}
-
-class StaticPause implements PlatformPause {
-  isPaused(): boolean { return false; }
-  subscribe(_listener: (paused: boolean) => void): () => void { return () => undefined; }
-}
-
-class NoopGameplayMarkup implements GameplayMarkup {
-  start(): void {}
-  stop(): void {}
-}
-
-function defaultStorage(): KeyValueStorageLike | null {
+function resolveBrowserStorage(): BrowserStorageLike | null {
   try {
-    if (typeof globalThis === 'undefined' || !('localStorage' in globalThis)) return null;
-    return globalThis.localStorage;
+    return (globalThis as { localStorage?: BrowserStorageLike }).localStorage ?? null;
   } catch {
     return null;
   }
 }
 
-export function createUnavailablePlatformServices(
-  storage: KeyValueStorageLike | null = defaultStorage(),
-): PlatformServices {
+export function createBrowserPlayerStorage(
+  storage: BrowserStorageLike | null = resolveBrowserStorage(),
+): PlayerStorage {
+  let memoryData: Record<string, unknown> = {};
+
   return {
-    storage: new BrowserPlayerStorage(storage),
-    clock: new StaticClock(),
-    pause: new StaticPause(),
-    gameplay: new NoopGameplayMarkup(),
-    auth: new UnavailableAuth(),
-    leaderboards: new UnavailableLeaderboards(),
-    payments: new UnavailablePaymentsGateway(),
-    ads: new UnavailableRewardedAdGateway(),
-    language: null,
-    ready: Promise.resolve(),
-    signalReady: async () => undefined,
+    scope: async () => 'browser-local',
+    async loadStrict(): Promise<unknown> {
+      if (storage !== null) {
+        const serialized = storage.getItem(PLAYER_DATA_KEY);
+        if (serialized !== null) {
+          const parsed: unknown = JSON.parse(serialized);
+          if (!isPlayerData(parsed)) throw new Error('Invalid player profile');
+          memoryData = cloneData(parsed);
+        }
+      }
+      return cloneData(memoryData);
+    },
+    async saveStrict(data: Record<string, unknown>): Promise<void> {
+      if (storage !== null) storage.setItem(PLAYER_DATA_KEY, JSON.stringify(data));
+      memoryData = cloneData(data);
+    },
+    async load(): Promise<unknown> {
+      if (storage !== null) {
+        try {
+          const serialized = storage.getItem(PLAYER_DATA_KEY);
+
+          if (serialized !== null) {
+            const parsed = JSON.parse(serialized) as unknown;
+
+            if (isPlayerData(parsed)) {
+              memoryData = cloneData(parsed);
+              return cloneData(memoryData);
+            }
+          }
+        } catch {
+          // Browser persistence can be blocked or corrupted; keep playing from memory.
+        }
+      }
+
+      return cloneData(memoryData);
+    },
+
+    async save(data: Record<string, unknown>): Promise<void> {
+      memoryData = cloneData(data);
+
+      if (storage !== null) {
+        try {
+          storage.setItem(PLAYER_DATA_KEY, JSON.stringify(data));
+        } catch {
+          // Memory remains the last-resort fallback for this page lifetime.
+        }
+      }
+    },
+  };
+}
+
+export function createUnavailablePlatformServices(
+  storage?: BrowserStorageLike | null,
+): PlatformServices {
+  const browserStorage = storage === undefined ? resolveBrowserStorage() : storage;
+
+  return {
+    playerStorage: createBrowserPlayerStorage(browserStorage),
+    trustedClock: { nowMs: () => null },
+    auth: {
+      isAuthorized: () => false,
+      requestAuthorization: async () => false,
+      onAccountSelectionClosed: () => () => undefined,
+    },
+    leaderboards: {
+      available: false,
+      getEntries: async () => [],
+      getPlayerEntry: async () => null,
+      setScore: async () => undefined,
+    },
+    ads: {
+      available: false,
+      showInterstitial: async () => false,
+    },
+    platformPause: {
+      isPaused: () => false,
+      subscribe: () => () => undefined,
+    },
+    gameplay: {
+      start: () => undefined,
+      stop: () => undefined,
+    },
+    ready: () => undefined,
   };
 }

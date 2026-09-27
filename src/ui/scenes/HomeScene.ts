@@ -1,8 +1,7 @@
 import Phaser from 'phaser';
 import { getRuntimeServices } from '../../meta/RuntimeServices.ts';
-import type { StandardDifficulty } from '../../meta/profile/ProfileTypes.ts';
+import type { StandardDifficulty } from '../../meta/MetaSave.ts';
 import { ActionCard } from '../components/ActionCard.ts';
-import { CoinPill } from '../components/CoinPill.ts';
 import { IconButton } from '../components/IconButton.ts';
 import { ModalShell } from '../components/ModalShell.ts';
 import { SegmentedControl } from '../components/SegmentedControl.ts';
@@ -14,6 +13,7 @@ import { UI_ICON_KEYS } from '../assets/UiAssets.ts';
 import { buildHomeViewModel, type HomeViewModel } from '../home/HomeViewModel.ts';
 import { BaseUiScene } from './BaseUiScene.ts';
 import { difficultySelectorLabel, tr } from '../../i18n/Localization.ts';
+import { productBridge } from '../bridge/TrifoldProductBridge.ts';
 
 export class HomeScene extends BaseUiScene {
   private navigation: NavigationController | null = null;
@@ -22,12 +22,11 @@ export class HomeScene extends BaseUiScene {
   private newDeal: ActionCard | null = null;
   private daily: ActionCard | null = null;
   private mastery: ActionCard | null = null;
-  private themes: ActionCard | null = null;
+  private leaders: ActionCard | null = null;
   private difficulty: SegmentedControl<StandardDifficulty> | null = null;
-  private coinPill: CoinPill | null = null;
   private serviceButtons: IconButton[] = [];
+  private unsubscribeBridge: (() => void) | null = null;
   private brandGraphics: Phaser.GameObjects.Graphics | null = null;
-  private brandImage: Phaser.GameObjects.Image | null = null;
   private brandTitle: Phaser.GameObjects.Text | null = null;
   private brandSubtitle: Phaser.GameObjects.Text | null = null;
   private newDealConfirmShell: ModalShell | null = null;
@@ -49,69 +48,72 @@ export class HomeScene extends BaseUiScene {
     this.primary = new ActionCard(this, viewport, {
       title: vm.primary.title,
       subtitle: vm.primary.subtitle,
+      artwork: 'landscape',
       enabled: true,
     }, () => this.openStandard(), 20);
-    if (vm.primary.hasSave) {
-      this.newDeal = new ActionCard(this, viewport, {
-        title: vm.newDeal.title,
-        enabled: true,
-      }, () => this.startSelectedStandard(), 20);
-    }
+    this.newDeal = new ActionCard(this, viewport, {
+      title: vm.newDeal.title,
+      emphasis: 'highlight',
+      enabled: true,
+    }, () => this.startSelectedStandard(), 20);
     this.daily = new ActionCard(this, viewport, {
       title: vm.daily.title,
       subtitle: vm.daily.subtitle,
+      artwork: 'daily',
       enabled: vm.daily.enabled,
     }, () => this.navigation?.go('daily'), 20);
     this.mastery = new ActionCard(this, viewport, {
-      title: vm.mastery.title,
+      title: tr(getRuntimeServices().language, 'mastery.title'),
       subtitle: vm.mastery.subtitle,
+      artwork: 'mastery',
+      artworkKey: `ui.rank.${vm.mastery.rank}`,
       enabled: vm.mastery.enabled,
     }, () => this.navigation?.go('mastery'), 20);
-    this.themes = new ActionCard(this, viewport, {
-      title: tr(getRuntimeServices().language, 'home.themes'),
-      subtitle: vm.themes.subtitle,
-      enabled: vm.themes.enabled,
-    }, () => this.navigation?.go('themes'), 20);
+    this.leaders = new ActionCard(this, viewport, {
+      title: vm.leaders.title,
+      subtitle: vm.leaders.subtitle,
+      artwork: 'leaders',
+      artworkKey: UI_ICON_KEYS.leaderboard,
+      enabled: vm.leaders.enabled,
+    }, () => this.navigation?.go('leaderboards'), 20);
     this.difficulty = new SegmentedControl(
       this,
       viewport,
       (['easy', 'medium', 'hard'] as const).map((value) => ({ value, label: difficultySelectorLabel(getRuntimeServices().language, value) })),
-      getRuntimeServices().repository.current.selectedStandardDifficulty,
+      vm.newDeal.difficulty,
       (value) => this.selectDifficulty(value),
       30,
     );
-    this.coinPill = new CoinPill(this, 30);
-    this.coinPill.setCoins(vm.coins);
     this.serviceButtons = [
-      new IconButton(this, viewport, { iconKey: UI_ICON_KEYS.leaderboard, enabled: vm.leaderboardsEnabled }, () => this.navigation?.go('leaderboards'), 30),
       new IconButton(this, viewport, { iconKey: UI_ICON_KEYS.howToPlay, enabled: true }, () => this.scene.start('HowToPlayScene'), 30),
       new IconButton(this, viewport, { iconKey: UI_ICON_KEYS.settings, enabled: true }, () => this.scene.start('SettingsScene'), 30),
     ];
     this.createBrandPlaceholder();
+    this.unsubscribeBridge = productBridge.subscribe(() => this.refreshFromBridge());
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.unsubscribeBridge?.();
+      this.unsubscribeBridge = null;
+      this.closeNewDealConfirmation();
+    });
     this.bindResponsiveLayout();
   }
 
   protected layout(viewport: ResolvedUiViewport): void {
     if (!this.primary) return;
     const home = computeHomeLayout(viewport);
-    for (const component of [this.primary, this.daily, this.mastery, this.themes]) component?.setViewport(viewport);
+    for (const component of [this.primary, this.newDeal, this.daily, this.mastery, this.leaders]) component?.setViewport(viewport);
     this.difficulty?.setViewport(viewport);
     for (const button of this.serviceButtons) button.setViewport(viewport);
 
     this.primary.layout(home.continuePrimary);
-    if (this.newDeal) {
-      this.difficulty?.layout(home.difficultySelector);
-      this.newDeal.layout(home.newDealAction);
-    } else {
-      this.difficulty?.layout(home.newDealRow);
-    }
+    this.difficulty?.layout(home.difficultySelector);
+    this.newDeal?.layout(home.newDealAction);
     this.daily?.layout(home.daily);
     this.mastery?.layout(home.mastery);
-    this.themes?.layout(home.themes);
-    this.coinPill?.layout(home.coinPill);
+    this.leaders?.layout(home.leaders);
 
     const gap = Math.max(6, home.serviceActions.height * 0.14);
-    const buttonWidth = (home.serviceActions.width - gap * 2) / 3;
+    const buttonWidth = (home.serviceActions.width - gap) / 2;
     this.serviceButtons.forEach((button, index) => button.layout({
       x: home.serviceActions.x + index * (buttonWidth + gap),
       y: home.serviceActions.y,
@@ -129,31 +131,38 @@ export class HomeScene extends BaseUiScene {
 
   private refreshViewModel(): void {
     const runtime = getRuntimeServices();
-    this.viewModel = buildHomeViewModel(runtime.repository.current, undefined, runtime.leaderboards.available, runtime.language);
+    this.viewModel = buildHomeViewModel(productBridge.snapshot(), runtime.language);
+  }
+
+  private refreshFromBridge(): void {
+    if (!this.isUiSceneActive()) return;
+    this.refreshViewModel();
+    const vm = this.requireViewModel();
+    this.primary?.setState({ title: vm.primary.title, subtitle: vm.primary.subtitle, artwork: 'landscape', enabled: true });
+    this.newDeal?.setState({ title: vm.newDeal.title, emphasis: 'highlight', enabled: true });
+    this.daily?.setState({ title: vm.daily.title, subtitle: vm.daily.subtitle, artwork: 'daily', enabled: vm.daily.enabled });
+    this.mastery?.setState({ title: tr(getRuntimeServices().language, 'mastery.title'), subtitle: vm.mastery.subtitle, artwork: 'mastery', artworkKey: `ui.rank.${vm.mastery.rank}`, enabled: vm.mastery.enabled });
+    this.leaders?.setState({ title: vm.leaders.title, subtitle: vm.leaders.subtitle, artwork: 'leaders', artworkKey: UI_ICON_KEYS.leaderboard, enabled: vm.leaders.enabled });
+    this.difficulty?.setSelected(vm.newDeal.difficulty);
+    this.requestUiLayout();
   }
 
   private openStandard(): void {
-    const profile = getRuntimeServices().repository.current;
-    if (profile.activeStandard) {
-      this.navigation?.go('standard', { mode: 'resume-standard' });
+    const vm = this.requireViewModel();
+    if (vm.primary.hasActiveGame) {
+      productBridge.resumeGame();
       return;
     }
-    this.navigation?.go('standard', {
-      mode: 'new-standard',
-      difficulty: profile.selectedStandardDifficulty,
-    });
+    void productBridge.startStandard(vm.newDeal.difficulty);
   }
 
   private startSelectedStandard(): void {
-    const profile = getRuntimeServices().repository.current;
-    if (profile.activeStandard) {
+    const vm = this.requireViewModel();
+    if (vm.primary.hasActiveGame) {
       this.confirmNewDeal();
       return;
     }
-    this.navigation?.go('standard', {
-      mode: 'new-standard',
-      difficulty: profile.selectedStandardDifficulty,
-    });
+    void productBridge.startStandard(vm.newDeal.difficulty);
   }
 
   private confirmNewDeal(): void {
@@ -171,9 +180,9 @@ export class HomeScene extends BaseUiScene {
       this.closeNewDealConfirmation();
     }, 5002);
     this.newDealConfirmStart = new ActionCard(this, viewport, { title: tr(language, 'common.newDeal'), emphasis: 'highlight', enabled: true }, () => {
-      const difficulty = getRuntimeServices().repository.current.selectedStandardDifficulty;
+      const difficulty = this.requireViewModel().newDeal.difficulty;
       this.closeNewDealConfirmation();
-      this.navigation?.go('standard', { mode: 'new-standard', difficulty });
+      void productBridge.startStandard(difficulty);
     }, 5002);
     this.layoutNewDealConfirmation(viewport);
   }
@@ -218,61 +227,42 @@ export class HomeScene extends BaseUiScene {
 
   private selectDifficulty(selectedStandardDifficulty: StandardDifficulty): void {
     const runtime = getRuntimeServices();
-    const repository = runtime.repository;
-    void repository.mutate((profile) => ({ ...profile, selectedStandardDifficulty })).then(() => {
+    void productBridge.setStandardDifficulty(selectedStandardDifficulty).then(() => {
       runtime.analytics.track('standard_difficulty_selected', { difficulty: selectedStandardDifficulty });
-      if (!this.isUiSceneActive()) return;
-      this.refreshViewModel();
-      const vm = this.requireViewModel();
-      this.difficulty?.setSelected(selectedStandardDifficulty);
-      this.primary?.setState({
-        title: vm.primary.title,
-        subtitle: vm.primary.subtitle,
-        enabled: true,
-      });
-      this.newDeal?.setState({ title: vm.newDeal.title, enabled: true });
-      this.coinPill?.setCoins(vm.coins);
-      this.requestUiLayout();
+      this.refreshFromBridge();
     });
   }
 
   private createBrandPlaceholder(): void {
-    if (this.textures.exists(UI_TOKENS.asset.homeBackground)) {
-      this.brandImage = this.add.image(0, 0, UI_TOKENS.asset.homeBackground).setOrigin(0).setDepth(1);
-    } else {
-      this.brandGraphics = this.add.graphics().setDepth(1);
-    }
+    // UI_TOKENS.asset.homeBackground is composed by BaseUiScene without stretching.
+    this.brandGraphics = this.add.graphics().setDepth(1);
     this.brandTitle = this.add.text(0, 0, 'TRIFOLD', {
-      color: '#eadfc7',
+      color: '#e8c88a',
       fontFamily: 'Georgia, serif',
-      fontStyle: 'bold',
+      fontStyle: 'normal',
     }).setOrigin(0, 0.5).setDepth(3);
     this.brandSubtitle = this.add.text(0, 0, tr(getRuntimeServices().language, 'home.subtitle'), {
-      color: '#aebeb7',
-      fontFamily: 'system-ui, sans-serif',
+      color: '#e3d5b5',
+      fontFamily: 'Georgia, serif',
     }).setOrigin(0, 0.5).setDepth(3);
   }
 
   private layoutBrand(bounds: UiRect, viewport: ResolvedUiViewport): void {
-    if (this.brandImage) this.brandImage.setPosition(bounds.x, bounds.y).setDisplaySize(bounds.width, bounds.height);
     if (this.brandGraphics) {
       this.brandGraphics.clear();
-      this.brandGraphics.fillStyle(0x214c47, 0.55).fillRoundedRect(bounds.x, bounds.y, bounds.width, bounds.height, 24);
-      this.brandGraphics.lineStyle(2, UI_TOKENS.color.gold, 0.24);
-      const mountainY = bounds.y + bounds.height * 0.68;
-      this.brandGraphics.beginPath()
-        .moveTo(bounds.x + bounds.width * 0.04, mountainY)
-        .lineTo(bounds.x + bounds.width * 0.28, bounds.y + bounds.height * 0.38)
-        .lineTo(bounds.x + bounds.width * 0.46, mountainY)
-        .lineTo(bounds.x + bounds.width * 0.68, bounds.y + bounds.height * 0.48)
-        .lineTo(bounds.x + bounds.width * 0.94, mountainY)
-        .strokePath();
+      const cx = bounds.x + bounds.width * 0.48;
+      const cy = bounds.y + bounds.height * 0.34;
+      const r = Math.max(4, bounds.width * 0.012);
+      this.brandGraphics.lineStyle(Math.max(1, viewport.minTouchTarget / 44), UI_TOKENS.color.gold, 0.85)
+        .lineBetween(bounds.x + bounds.width * 0.12, cy, cx - r * 3, cy)
+        .lineBetween(cx + r * 3, cy, bounds.x + bounds.width * 0.84, cy);
+      for (const dx of [-r * 1.5, 0, r * 1.5]) this.brandGraphics.beginPath().moveTo(cx + dx, cy - r).lineTo(cx + dx + r, cy).lineTo(cx + dx, cy + r).lineTo(cx + dx - r, cy).closePath().strokePath();
     }
-    const titleSize = Math.max(30, Math.min(74, bounds.width * (viewport.profile === 'desktop' ? 0.105 : 0.13)));
-    this.brandTitle?.setFontSize(titleSize).setPosition(bounds.x + bounds.width * 0.08, bounds.y + bounds.height * 0.42);
-    this.brandSubtitle?.setFontSize(Math.max(12, titleSize * 0.24)).setPosition(
-      bounds.x + bounds.width * 0.08,
-      bounds.y + bounds.height * 0.51,
+    const titleSize = bounds.width * 0.135;
+    this.brandTitle?.setOrigin(0.5).setLetterSpacing(titleSize * 0.08).setFontSize(titleSize).setPosition(bounds.x + bounds.width * 0.48, bounds.y + bounds.height * 0.29);
+    this.brandSubtitle?.setOrigin(0.5).setFontSize(Math.max(11 * viewport.minTouchTarget / 44, titleSize * 0.23)).setPosition(
+      bounds.x + bounds.width * 0.48,
+      bounds.y + bounds.height * 0.385,
     );
   }
 }

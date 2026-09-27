@@ -1,17 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createDefaultProfile } from '../src/meta/profile/ProfileSchema.ts';
-import type { PlayerProfileV1 } from '../src/meta/profile/ProfileTypes.ts';
-import type { ProfileStore } from '../src/meta/profile/ProfileRepository.ts';
 import { VerifiedDealCatalog } from '../src/game/model/VerifiedDealCatalog.ts';
 import { createRuntimeServices, getRuntimeServices, installRuntimeServices } from '../src/meta/RuntimeServices.ts';
-import { createUnavailablePlatformServices } from '../src/platform/services.ts';
-
-class MemoryProfileStore implements ProfileStore {
-  profile: PlayerProfileV1 = createDefaultProfile();
-  async load() { return structuredClone(this.profile); }
-  async save(profile: PlayerProfileV1) { this.profile = structuredClone(profile); }
-}
+import { createUnavailablePlatformServices, type PlayerStorage } from '../src/platform/services.ts';
+import { createLegacyProfileFixture } from './fixtures/legacy-profile-v1.ts';
 
 function fixtureCatalog(): VerifiedDealCatalog {
   const buffer = new ArrayBuffer(20);
@@ -33,31 +25,89 @@ function fixtureCatalog(): VerifiedDealCatalog {
   });
 }
 
-test('runtime services initialize one shared repository and verified catalog', async () => {
+test('runtime services initialize MetaSession as the only product profile authority', async () => {
   const catalog = fixtureCatalog();
   const services = await createRuntimeServices({
-    store: new MemoryProfileStore(),
     catalogLoader: async () => catalog,
   });
   installRuntimeServices(services);
   assert.equal(getRuntimeServices(), services);
   assert.equal(services.catalog, catalog);
-  await services.repository.mutate((profile) => ({ ...profile, coins: 7 }));
-  assert.equal(getRuntimeServices().repository.current.coins, 7);
+  assert.equal(services.metaSession.state.version, 1);
+  assert.equal(services.metaSession.state.standard.selectedDifficulty, 'easy');
+  assert.equal(services.activeGames.load(), null);
+  assert.equal('repository' in services, false);
+  assert.equal(getRuntimeServices().metaSession, services.metaSession);
+  assert.equal('rewardedAds' in services, false);
+  assert.equal('payments' in services, false);
 });
 
 
-test('runtime language follows Yandex on automatic setting and manual profile override wins immediately', async () => {
+test('runtime language follows Yandex until explicit Preferences override wins immediately', async () => {
   const basePlatform = createUnavailablePlatformServices(null);
   const services = await createRuntimeServices({
-    store: new MemoryProfileStore(),
     catalogLoader: async () => fixtureCatalog(),
     platform: { ...basePlatform, language: 'en-US' },
   });
   assert.equal(services.language, 'en');
-  await services.repository.mutate((profile) => ({
-    ...profile,
-    settings: { ...profile.settings, language: 'ru' },
-  }));
+  services.preferences.setLanguage('ru');
   assert.equal(services.language, 'ru');
+});
+
+
+test('runtime keeps migrated legacy meta in memory when first persistence write fails', async () => {
+  const legacyProfile = createLegacyProfileFixture();
+  const legacyStorage = {
+    getItem(key: string): string | null {
+      return key === 'trifoldPlayerProfile' ? JSON.stringify(legacyProfile) : null;
+    },
+  };
+  const playerStorage: PlayerStorage = {
+    scope: async () => 'offline-player',
+    loadStrict: async () => ({}),
+    saveStrict: async () => { throw new Error('offline'); },
+    load: async () => ({}),
+    save: async () => { throw new Error('offline'); },
+  };
+  const base = createUnavailablePlatformServices(null);
+  const services = await createRuntimeServices({
+    catalogLoader: async () => fixtureCatalog(),
+    platform: { ...base, playerStorage },
+    legacyLocalStorage: legacyStorage,
+    preferenceStorage: null,
+  });
+
+  assert.equal(services.metaSession.state.standard.selectedDifficulty, 'hard');
+  assert.equal(services.metaSession.state.mastery.rank, 'expert');
+  assert.equal(services.metaSession.status, 'ready');
+  assert.equal(services.metaSession.saveError, true);
+});
+
+
+test('runtime stays usable on migrated local meta when platform storage cannot be read or written', async () => {
+  const legacyProfile = createLegacyProfileFixture();
+  const legacyStorage = {
+    getItem(key: string): string | null {
+      return key === 'trifoldPlayerProfile' ? JSON.stringify(legacyProfile) : null;
+    },
+  };
+  const playerStorage: PlayerStorage = {
+    scope: async () => 'offline-player',
+    loadStrict: async () => { throw new Error('offline'); },
+    saveStrict: async () => { throw new Error('offline'); },
+    load: async () => { throw new Error('offline'); },
+    save: async () => { throw new Error('offline'); },
+  };
+  const base = createUnavailablePlatformServices(null);
+  const services = await createRuntimeServices({
+    catalogLoader: async () => fixtureCatalog(),
+    platform: { ...base, playerStorage },
+    legacyLocalStorage: legacyStorage,
+    preferenceStorage: null,
+  });
+
+  assert.equal(services.metaSession.state.standard.selectedDifficulty, 'hard');
+  assert.equal(services.metaSession.state.mastery.rank, 'expert');
+  assert.equal(services.metaSession.status, 'ready');
+  assert.equal(services.metaSession.saveError, true);
 });

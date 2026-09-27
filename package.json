@@ -16,7 +16,10 @@
     "deals:verify-all": "node --experimental-strip-types tools/deals/verify-all.mjs",
     "deals:report": "node --experimental-strip-types tools/deals/report.mjs",
     "tutorial:select-deal": "node --experimental-strip-types tools/tutorial/select-tutorial-deal.mjs",
-    "dev:yandex": "node tools/dev/yandex-dev.mjs"
+    "dev:yandex": "node tools/dev/yandex-dev.mjs",
+    "visual-qa:capture": "node --experimental-strip-types tools/visual-qa/capture.mjs",
+    "visual-qa:gallery": "node tools/visual-qa/gallery.mjs",
+    "visual-qa:dim": "node tools/visual-qa/dim-pass.mjs"
   },
   "dependencies": {
     "phaser": "^3.90.0"

@@ -1,9 +1,6 @@
 import Phaser from 'phaser';
 import { getRuntimeServices } from '../../meta/RuntimeServices.ts';
-import { reconcileCoinPackPurchases } from '../../platform/PurchaseReconciliation.ts';
-import { getDailySelection } from '../../meta/daily/DailySchedule.ts';
-import { toLocalDateKey } from '../../meta/daily/DailyDate.ts';
-import type { LeaderboardEntry } from '../../platform/services.ts';
+import type { LeaderboardRow } from '../../leaderboards/LeaderboardService.ts';
 import { ActionCard } from '../components/ActionCard.ts';
 import { IconButton } from '../components/IconButton.ts';
 import { PaperPanel } from '../components/PaperPanel.ts';
@@ -16,6 +13,7 @@ import { UI_ICON_KEYS } from '../assets/UiAssets.ts';
 import { BaseUiScene } from './BaseUiScene.ts';
 import { tr } from '../../i18n/Localization.ts';
 import { formatLeaderboardValue } from '../leaderboards/LeaderboardRowFormat.ts';
+import { productBridge } from '../bridge/TrifoldProductBridge.ts';
 
 type LeaderboardTab = 'daily' | 'streak' | 'mastery';
 
@@ -39,7 +37,7 @@ export class LeaderboardsScene extends BaseUiScene {
     this.cameras.main.setBackgroundColor(UI_TOKENS.color.table);
     getRuntimeServices().analytics.track('leaderboard_open');
     this.navigation = new NavigationController(this.scene);
-    const language = getRuntimeServices().language;
+    const language = productBridge.settingsSnapshot().language;
     const viewport = this.currentUiViewport();
     this.back = new IconButton(this, viewport, { iconKey: UI_ICON_KEYS.back, enabled: true }, () => this.navigation?.home(), 30);
     this.tabs = new SegmentedControl(this, viewport, [
@@ -81,9 +79,9 @@ export class LeaderboardsScene extends BaseUiScene {
     const tabsH = Math.max(viewport.minTouchTarget, 50);
     this.tabs.layout({ x: contentX, y: tabsY, width: contentW, height: tabsH });
     const panelY = tabsY + tabsH + 12;
-    const authorized = getRuntimeServices().platform.auth.isAuthorized();
-    this.signIn.setVisible(!authorized);
-    const authH = authorized ? 0 : Math.max(viewport.minTouchTarget, 64);
+    const auth = productBridge.leaderboardSnapshot();
+    this.signIn.setVisible(!auth.authorized);
+    const authH = auth.authorized ? 0 : Math.max(viewport.minTouchTarget, 64);
     const panelH = Math.max(120, viewport.height - panelY - margin - (authH > 0 ? authH + 12 : 0));
     const panelBounds: UiRect = { x: contentX, y: panelY, width: contentW, height: panelH };
     this.panel.layout(panelBounds);
@@ -100,16 +98,11 @@ export class LeaderboardsScene extends BaseUiScene {
     if (this.loading) return;
     this.loading = true;
     try {
-      const runtime = getRuntimeServices();
-      let result;
-      if (this.selected === 'daily') {
-        const todayKey = toLocalDateKey(new Date());
-        result = await runtime.leaderboards.loadDaily(getDailySelection(runtime.catalog, todayKey));
-      } else if (this.selected === 'streak') result = await runtime.leaderboards.loadStreak();
-      else result = await runtime.leaderboards.loadMastery();
+      const product = productBridge.snapshot();
+      const result = await productBridge.loadLeaderboard(this.selected, this.selected === 'daily' ? product.currentDailyId ?? undefined : undefined);
       if (!this.isUiSceneActive()) return;
       this.rebuildRows(result.entries);
-      const language = runtime.language;
+      const language = productBridge.settingsSnapshot().language;
       this.status?.setText(result.status === 'ready'
         ? (result.playerEntry ? tr(language, 'leaderboards.yourRank', { rank: result.playerEntry.rank }) : tr(language, 'leaderboards.top'))
         : result.status === 'unavailable' ? tr(language, 'leaderboards.unavailable') : tr(language, 'leaderboards.failed'));
@@ -120,9 +113,9 @@ export class LeaderboardsScene extends BaseUiScene {
     }
   }
 
-  private rebuildRows(entries: readonly LeaderboardEntry[]): void {
+  private rebuildRows(entries: readonly LeaderboardRow[]): void {
     for (const row of this.rows) row.destroy();
-    const language = getRuntimeServices().language;
+    const language = productBridge.settingsSnapshot().language;
     this.rows = entries.slice(0, 10).map((entry) => {
       const playerName = entry.publicName.trim() || tr(language, 'leaderboards.player');
       const value = formatLeaderboardValue(this.selected, entry, language);
@@ -133,22 +126,19 @@ export class LeaderboardsScene extends BaseUiScene {
   }
 
   private updateSignInState(): void {
-    const runtime = getRuntimeServices();
-    const auth = runtime.platform.auth;
-    const language = runtime.language;
-    const authorized = auth.isAuthorized();
-    this.signIn?.setVisible(!authorized);
+    const auth = productBridge.leaderboardSnapshot();
+    const language = productBridge.settingsSnapshot().language;
+    this.signIn?.setVisible(!auth.authorized);
     this.signIn?.setState({
       title: tr(language, 'leaderboards.signIn'),
       subtitle: tr(language, auth.available ? 'leaderboards.signInSubtitle' : 'leaderboards.authUnavailable'),
-      enabled: auth.available && !authorized && !this.authorizing,
+      enabled: auth.authorizationAllowed && !this.authorizing,
     });
   }
 
   private async authorizeAndReload(): Promise<void> {
-    const runtime = getRuntimeServices();
-    const auth = runtime.platform.auth;
-    if (this.authorizing || !auth.available || auth.isAuthorized()) return;
+    const auth = productBridge.leaderboardSnapshot();
+    if (this.authorizing || !auth.authorizationAllowed || auth.authorized) return;
 
     this.authorizing = true;
     this.updateSignInState();
@@ -156,7 +146,7 @@ export class LeaderboardsScene extends BaseUiScene {
 
     let authorized = false;
     try {
-      authorized = await runtime.leaderboards.requestAuthorization();
+      authorized = await productBridge.authorizeLeaderboard();
     } finally {
       this.authorizing = false;
       this.updateSignInState();
@@ -164,32 +154,7 @@ export class LeaderboardsScene extends BaseUiScene {
     }
     if (!authorized) return;
 
-    // Reflect successful Yandex authorization immediately. Cloud/profile follow-up
-    // must not make a successful sign-in look like it failed.
-    this.updateSignInState();
-    this.requestUiLayout();
-    runtime.analytics.track('auth_success');
-
-    try {
-      await runtime.repository.connectCloud(runtime.platform);
-      runtime.theme.setTheme(runtime.repository.current.activeThemeId);
-    } catch (error) {
-      console.warn('[Trifold] Cloud profile connection after authorization failed.', error);
-    }
-
-    try {
-      await reconcileCoinPackPurchases(runtime.repository, runtime.payments);
-    } catch (error) {
-      console.warn('[Trifold] Purchase reconciliation after authorization failed.', error);
-    }
-
-    try {
-      const todayKey = toLocalDateKey(new Date());
-      await runtime.leaderboards.syncFromProfile(runtime.repository.current, todayKey, runtime.catalog);
-    } catch (error) {
-      console.warn('[Trifold] Leaderboard sync after authorization failed.', error);
-    }
-
+    getRuntimeServices().analytics.track('auth_success');
     if (this.isUiSceneActive()) await this.refreshRows();
   }
 

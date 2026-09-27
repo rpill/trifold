@@ -1,4 +1,4 @@
-import type { StandardDifficulty } from '../../meta/profile/ProfileTypes.ts';
+import type { StandardDifficulty } from '../../meta/MetaSave.ts';
 import type { AppLanguage } from '../../i18n/Language.ts';
 import { difficultyLabel, formatMoveCount, tr } from '../../i18n/Localization.ts';
 
@@ -9,7 +9,6 @@ export interface GameHudInput {
   readonly activeMs: number;
   readonly assisted: boolean;
   readonly canUndo: boolean;
-  readonly coins: number;
   readonly hintEligible: boolean;
 }
 
@@ -20,7 +19,6 @@ export interface GameHudViewModel {
   readonly assisted: boolean;
   readonly undoEnabled: boolean;
   readonly hintEnabled: boolean;
-  readonly coins: number;
   readonly homeLabel: string;
   readonly newDealLabel: string;
   readonly undoLabel: string;
@@ -43,7 +41,6 @@ export function buildGameHudViewModel(input: GameHudInput, language: AppLanguage
     assisted: input.assisted,
     undoEnabled: input.canUndo,
     hintEnabled: input.hintEligible,
-    coins: Math.max(0, Math.floor(input.coins)),
     homeLabel: tr(language, 'common.home'),
     newDealLabel: tr(language, 'common.newShort'),
     undoLabel: tr(language, 'hud.undo'),

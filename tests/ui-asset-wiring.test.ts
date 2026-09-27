@@ -4,7 +4,7 @@ import { existsSync, readFileSync } from 'node:fs';
 
 const requiredIcons = [
   'home', 'new-deal', 'undo', 'hint', 'settings',
-  'leaderboard', 'how-to-play', 'coin', 'daily', 'mastery', 'themes',
+  'leaderboard', 'how-to-play', 'daily', 'mastery',
 ] as const;
 
 test('production UI icon assets are bundled under public/assets/ui/icons', () => {
@@ -40,10 +40,8 @@ test('Game HUD assigns prepared icons to every primary action', () => {
   assert.ok(hud.includes('Phaser.GameObjects.Image'));
 });
 
-test('coin displays use the prepared coin icon rather than a text bullet', () => {
-  const pill = readFileSync('src/ui/components/CoinPill.ts', 'utf8');
-  const hud = readFileSync('src/ui/game/GameHud.ts', 'utf8');
-  assert.ok(pill.includes('UI_ICON_KEYS.coin'));
-  assert.ok(pill.includes('Phaser.GameObjects.Image'));
-  assert.equal(hud.includes("setText(`● ${this.viewModel.coins}`)"), false);
+test('shipping UI registry has no product coin or themes icon keys', () => {
+  const assets = readFileSync('src/ui/assets/UiAssets.ts', 'utf8');
+  assert.doesNotMatch(assets, /coin:\s*['\"]/);
+  assert.doesNotMatch(assets, /themes:\s*['\"]/);
 });

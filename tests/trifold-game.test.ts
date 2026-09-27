@@ -19,6 +19,11 @@ function allIds(snapshot: TrifoldSnapshot): CardId[] {
   ];
 }
 
+test('gameplay snapshot retains coins foundation after product reset', () => {
+  const game = new TrifoldGame(createDeal(1));
+  assert.ok('coins' in game.snapshot().foundations);
+});
+
 test('new game starts from the exact 8x5 deal with empty completion zones', () => {
   const game = new TrifoldGame(createDeal(1));
   const snapshot = game.snapshot();

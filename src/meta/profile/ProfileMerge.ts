@@ -1,5 +1,4 @@
 import { getMasteryRequirements } from '../mastery/Mastery.ts';
-import { getLaunchThemes } from '../../theme/ThemeCatalog.ts';
 import { parsePlayerProfile } from './ProfileSchema.ts';
 import type {
   AttemptRecord,
@@ -58,7 +57,6 @@ function mergeDailyEntry(local: DailyHistoryEntry | undefined, cloud: DailyHisto
     completedOnTime: local.completedOnTime || cloud.completedOnTime,
     officialResult: cloud.officialResult ? structuredClone(cloud.officialResult) : (local.officialResult ? structuredClone(local.officialResult) : null),
     personalBest: better(local.personalBest, cloud.personalBest),
-    firstCompletionRewardClaimed: local.firstCompletionRewardClaimed || cloud.firstCompletionRewardClaimed,
   };
 }
 function mergeRecordMap(local: Readonly<Record<string, AttemptRecord>>, cloud: Readonly<Record<string, AttemptRecord>>): Record<string, AttemptRecord> {
@@ -82,12 +80,6 @@ export function mergeProfiles(localInput: PlayerProfileV1, cloudInput: PlayerPro
     const merged = mergeDailyEntry(local.daily.history[key], cloud.daily.history[key]);
     if (merged) history[key] = merged;
   }
-  const ownedSet = new Set([...local.ownedThemeIds, ...cloud.ownedThemeIds]);
-  const ownedThemeIds = getLaunchThemes().map((theme) => theme.id).filter((id) => ownedSet.has(id));
-  const activeThemeId = ownedThemeIds.includes(local.activeThemeId)
-    ? local.activeThemeId
-    : (ownedThemeIds.includes(cloud.activeThemeId) ? cloud.activeThemeId : 'base');
-
   const merged: PlayerProfileV1 = {
     version: 1,
     selectedStandardDifficulty: local.selectedStandardDifficulty,
@@ -107,10 +99,6 @@ export function mergeProfiles(localInput: PlayerProfileV1, cloudInput: PlayerPro
       active: newest<SavedDailyAttempt>(local.daily.active, cloud.daily.active),
       bestStreak: Math.max(local.daily.bestStreak, cloud.daily.bestStreak),
     },
-    coins: Math.max(local.coins, cloud.coins),
-    claimedRewardKeys: unionStrings(local.claimedRewardKeys, cloud.claimedRewardKeys),
-    ownedThemeIds,
-    activeThemeId,
     tutorialCompleted: local.tutorialCompleted || cloud.tutorialCompleted,
     settings: {
       ...local.settings,

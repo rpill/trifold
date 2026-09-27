@@ -1,52 +1,31 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { deriveBestStreak, deriveCurrentStreak, mergeDailyHistoryEntry } from '../src/meta/daily/DailyHistory.ts';
-import type { DailyHistoryEntry } from '../src/meta/profile/ProfileTypes.ts';
+import { deriveBestStreak, deriveCurrentStreak, mergeDailyRecord } from '../src/meta/daily/DailyHistory.ts';
+import type { DailyRecord } from '../src/meta/MetaSave.ts';
 
-function completedEntry(dateKey: string, completedOnTime: boolean): DailyHistoryEntry {
-  return {
-    dateKey,
-    completed: true,
-    completedOnTime,
-    officialResult: completedOnTime ? { moves: 40, activeMs: 300_000 } : null,
-    personalBest: { moves: 40, activeMs: 300_000 },
-    firstCompletionRewardClaimed: true,
-  };
+function completed(completedOnTime: boolean): DailyRecord {
+  return { completed: true, completedOnTime, attempts: 1, personalBest: { moves: 40, activeMs: 300_000 } };
 }
-
-function entries(keys: readonly string[]): Record<string, DailyHistoryEntry> {
-  return Object.fromEntries(keys.map((key) => [key, completedEntry(key, true)]));
+function records(keys: readonly string[]): Record<string, DailyRecord> {
+  return Object.fromEntries(keys.map((key) => [key, completed(true)]));
 }
 
 test('unplayed today preserves yesterday ending streak during the current day', () => {
-  const history = entries(['2026-09-11', '2026-09-12', '2026-09-13']);
-  assert.equal(deriveCurrentStreak(history, '2026-09-14'), 3);
+  assert.equal(deriveCurrentStreak(records(['2026-09-11', '2026-09-12', '2026-09-13']), '2026-09-14'), 3);
 });
-
 test('missing yesterday means streak is already broken today', () => {
-  const history = entries(['2026-09-11', '2026-09-12']);
-  assert.equal(deriveCurrentStreak(history, '2026-09-14'), 0);
+  assert.equal(deriveCurrentStreak(records(['2026-09-11', '2026-09-12']), '2026-09-14'), 0);
 });
-
-test('archive completion does not count because completedOnTime is false', () => {
-  const history = {
-    '2026-09-13': completedEntry('2026-09-13', false),
-    '2026-09-14': completedEntry('2026-09-14', true),
-  };
-  assert.equal(deriveCurrentStreak(history, '2026-09-14'), 1);
+test('late archive completion does not count toward streak', () => {
+  assert.equal(deriveCurrentStreak({ '2026-09-13': completed(false), '2026-09-14': completed(true) }, '2026-09-14'), 1);
 });
-
-test('best streak considers only consecutive on-time days', () => {
-  const history = {
-    ...entries(['2026-09-01', '2026-09-02', '2026-09-03', '2026-09-05', '2026-09-06']),
-    '2026-09-04': completedEntry('2026-09-04', false),
-  };
-  assert.equal(deriveBestStreak(history), 3);
+test('best streak respects persisted legacy floor', () => {
+  const history = { ...records(['2026-09-01','2026-09-02','2026-09-03','2026-09-05','2026-09-06']), '2026-09-04': completed(false) };
+  assert.equal(deriveBestStreak(history, 7), 7);
+  assert.equal(deriveBestStreak(history, 0), 3);
 });
-
-test('merge keeps date-key identity and rejects mismatches', () => {
-  const entry = completedEntry('2026-09-14', true);
-  const merged = mergeDailyHistoryEntry({}, entry);
-  assert.deepEqual(merged['2026-09-14'], entry);
-  assert.throws(() => mergeDailyHistoryEntry({}, { ...entry, dateKey: 'bad' }), /date/i);
+test('merge validates date key and stores MetaSave DailyRecord without embedding identity', () => {
+  const entry = completed(true);
+  assert.deepEqual(mergeDailyRecord({}, '2026-09-14', entry)['2026-09-14'], entry);
+  assert.throws(() => mergeDailyRecord({}, 'bad', entry), /date/i);
 });

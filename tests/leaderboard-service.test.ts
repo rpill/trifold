@@ -1,91 +1,47 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { LeaderboardService } from '../src/leaderboards/LeaderboardService.ts';
-import { encodeDailyScore, encodeMasteryScore, MASTERY_LEADERBOARD_NAME, STREAK_LEADERBOARD_NAME, DAILY_LEADERBOARD_NAME } from '../src/leaderboards/LeaderboardConfig.ts';
-import { createDefaultProfile } from '../src/meta/profile/ProfileSchema.ts';
-import type { PlatformAuth, PlatformLeaderboards } from '../src/platform/services.ts';
+import { encodeDailyLeaderboardScore, encodeMasteryScore, encodeStreakScore } from '../src/leaderboards/LeaderboardConfig.ts';
+import { createDefaultMetaSave } from '../src/meta/MetaSave.ts';
+import type { PlatformServices } from '../src/platform/services.ts';
 
-function auth(authorized: boolean): PlatformAuth {
-  return { available: true, isAuthorized: () => authorized, requestAuthorization: async () => authorized };
+function platform(options:{available?:boolean;authorized?:boolean;entries?:PlatformServices['leaderboards']['getEntries'];player?:PlatformServices['leaderboards']['getPlayerEntry'];write?:PlatformServices['leaderboards']['setScore']}={}):PlatformServices{
+ return {playerStorage:{load:async()=>({}),save:async()=>undefined},trustedClock:{nowMs:()=>null},auth:{isAuthorized:()=>options.authorized??true,requestAuthorization:async()=>options.authorized??true,onAccountSelectionClosed:()=>()=>undefined},leaderboards:{available:options.available??true,getEntries:options.entries??(async()=>[]),getPlayerEntry:options.player??(async()=>null),setScore:options.write??(async()=>undefined)},ads:{available:false,showInterstitial:async()=>false},platformPause:{isPaused:()=>false,subscribe:()=>()=>undefined},gameplay:{start:()=>undefined,stop:()=>undefined},ready:()=>undefined};
 }
 
-function board(overrides: Partial<PlatformLeaderboards> = {}): PlatformLeaderboards {
-  return {
-    available: true,
-    getEntries: async () => ({ entries: [], userRank: null }),
-    getPlayerEntry: async () => null,
-    setScore: async () => undefined,
-    ...overrides,
-  };
-}
-
-const catalog = {
-  metadata: { dailyScheduleStart: '2026-01-01', dailyScheduleLength: 7305 },
-  getDailySeedByOffset: (offset: number) => offset + 1,
-};
-
-test('unauthorized guests load public Daily top but have no player entry', async () => {
-  const rows = [{ score: encodeDailyScore(256, 40, 5000), rank: 1, publicName: 'A', uniqueId: null, avatarUrl: null, extraData: '' }];
-  const service = new LeaderboardService(board({ getEntries: async () => ({ entries: rows, userRank: null }) }), auth(false));
-  const result = await service.loadDaily({ dateKey: '2026-09-14', offset: 256, seed: 1 });
-  assert.equal(result.status, 'ready');
-  assert.equal(result.entries.length, 1);
-  assert.equal(result.playerEntry, null);
+test('unavailable and unauthorised load paths are non-fatal', async()=>{
+ assert.deepEqual(await new LeaderboardService(platform({available:false})).load('streak'),{status:'unavailable',authorized:true,entries:[],playerEntry:null});
+ const service=new LeaderboardService(platform({authorized:false,entries:async()=>[{rank:1,score:encodeStreakScore(8,12),playerId:'a',publicName:'Ada'}]}));
+ const result=await service.load('streak'); assert.equal(result.status,'ready'); if(result.status!=='ready')return;
+ assert.equal(result.authorized,false); assert.equal(result.playerEntry,null); assert.deepEqual(result.entries[0]?.metric,{kind:'streak',current:8,best:12});
 });
 
-test('Daily loader filters stale encoded dates from shared technical board', async () => {
-  const rows = [
-    { score: encodeDailyScore(255, 30, 1000), rank: 1, publicName: 'old', uniqueId: null, avatarUrl: null, extraData: '' },
-    { score: encodeDailyScore(256, 40, 5000), rank: 2, publicName: 'today', uniqueId: null, avatarUrl: null, extraData: '' },
-  ];
-  const service = new LeaderboardService(board({ getEntries: async () => ({ entries: rows, userRank: null }) }), auth(false));
-  const result = await service.loadDaily({ dateKey: '2026-09-14', offset: 256, seed: 1 });
-  assert.deepEqual(result.entries.map((e) => e.publicName), ['today']);
+test('Daily load requires day and filters encoded rows for other dates', async()=>{
+ const today='2026-09-16';
+ const service=new LeaderboardService(platform({entries:async()=>[
+  {rank:1,score:encodeDailyLeaderboardScore(today,40,80000),playerId:'a',publicName:'Ada'},
+  {rank:2,score:encodeDailyLeaderboardScore('2026-09-15',20,60000),playerId:'b',publicName:'Old'},
+ ]}));
+ assert.equal((await service.load('daily')).status,'error');
+ const result=await service.load('daily',today); assert.equal(result.status,'ready'); if(result.status!=='ready')return;
+ assert.equal(result.entries.length,1); assert.deepEqual(result.entries[0]?.metric,{kind:'daily',moves:40,elapsedMs:80000});
 });
 
-test('sync submits official Daily, best streak and Mastery only for authorized player', async () => {
-  const calls: Array<[string, number]> = [];
-  const lb = board({
-    getPlayerEntry: async () => null,
-    setScore: async (name, score) => { calls.push([name, score]); },
-  });
-  const profile = {
-    ...createDefaultProfile(),
-    daily: {
-      history: {
-        '2026-09-14': { dateKey: '2026-09-14', completed: true, completedOnTime: true, officialResult: { moves: 40, activeMs: 5000 }, personalBest: { moves: 30, activeMs: 4000 }, firstCompletionRewardClaimed: true },
-      }, active: null, bestStreak: 12,
-    },
-    mastery: { rank: 'player' as const, stage: { anyWins: 0, mediumWins: 3, hardWins: 1, onTimeDailyWins: 0 } },
-  };
-  const service = new LeaderboardService(lb, auth(true));
-  await service.syncFromProfile(profile, '2026-09-14', catalog);
-  const daily = calls.find(([name]) => name === DAILY_LEADERBOARD_NAME);
-  assert.equal(daily?.[1], encodeDailyScore(256, 40, 5000));
-  assert.ok(calls.some(([name, score]) => name === STREAK_LEADERBOARD_NAME && score === 12));
-  assert.ok(calls.some(([name, score]) => name === MASTERY_LEADERBOARD_NAME && score === encodeMasteryScore(profile)));
+test('authorized Mastery row normalizes and malformed rows are ignored', async()=>{
+ const base=createDefaultMetaSave(); const meta={...base,mastery:{rank:'expert' as const,stage:base.mastery.stage}}; const score=encodeMasteryScore(meta);
+ const service=new LeaderboardService(platform({entries:async()=>[{rank:0,score,playerId:'bad',publicName:'Bad'},{rank:1,score,playerId:'a',publicName:'Ada'}],player:async()=>({rank:7,score,playerId:'me',publicName:'Me'})}));
+ const result=await service.load('mastery'); assert.equal(result.status,'ready'); if(result.status!=='ready')return;
+ assert.equal(result.entries.length,1); assert.equal(result.playerEntry?.rank,7);
 });
 
-test('sync skips network errors and unavailable/guest services', async () => {
-  const unavailable = new LeaderboardService({ ...board(), available: false }, auth(true));
-  assert.equal((await unavailable.loadStreak()).status, 'unavailable');
-  const failing = new LeaderboardService(board({ getEntries: async () => { throw new Error('offline'); } }), auth(false));
-  assert.equal((await failing.loadStreak()).status, 'error');
-  await new LeaderboardService(board({ setScore: async () => { throw new Error('offline'); } }), auth(true))
-    .syncFromProfile(createDefaultProfile(), '2026-09-14', catalog);
-});
-
-test('leaderboard top requests respect Yandex quantityTop maximum of 20', async () => {
-  const quantities: number[] = [];
-  const lb = board({
-    getEntries: async (_name, options) => {
-      quantities.push(options?.quantityTop ?? 0);
-      return { entries: [], userRank: null };
-    },
-  });
-  const service = new LeaderboardService(lb, auth(false));
-  await service.loadDaily({ dateKey: '2026-09-14', offset: 256, seed: 1 });
-  await service.loadStreak();
-  await service.loadMastery();
-  assert.deepEqual(quantities, [20, 20, 20]);
+test('sync methods coalesce policy and fail soft', async()=>{
+ const writes:Array<[string,number]>=[]; let server:null|{rank:number;score:number;playerId:string;publicName:string}=null;
+ const service=new LeaderboardService(platform({player:async()=>server,write:async(name,score)=>{writes.push([name,score]); server={rank:1,score,playerId:'me',publicName:'Me'};}}));
+ assert.equal(await service.syncDailyBest('2026-09-16',40,80000),'submitted');
+ assert.equal(await service.syncDailyBest('2026-09-16',40,80000),'unchanged');
+ assert.equal(await service.syncDailyStreak(0,15),'submitted');
+ assert.equal(await service.syncMasteryScore(2_000_000_005),'submitted');
+ assert.equal(writes.length,3);
+ const failing=new LeaderboardService(platform({write:async()=>{throw new Error('offline')}}));
+ assert.equal(await failing.syncMasteryScore(3),'skipped');
 });

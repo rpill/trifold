@@ -1,5 +1,4 @@
 import type { TrifoldGameSaveV1 } from '../../game/model/TrifoldGame.ts';
-import type { ThemeId } from '../../theme/ThemeDefinition.ts';
 import type { AppLanguage } from '../../i18n/Language.ts';
 
 export type StandardDifficulty = 'easy' | 'medium' | 'hard';
@@ -36,7 +35,6 @@ export interface DailyHistoryEntry {
   readonly completedOnTime: boolean;
   readonly officialResult: AttemptRecord | null;
   readonly personalBest: AttemptRecord | null;
-  readonly firstCompletionRewardClaimed: boolean;
 }
 
 export interface SavedDailyAttempt {
@@ -73,10 +71,6 @@ export interface PlayerProfileV1 {
     readonly onTimeDailyDates: readonly string[];
   };
   readonly daily: DailyProfileState;
-  readonly coins: number;
-  readonly claimedRewardKeys: readonly string[];
-  readonly ownedThemeIds: readonly ThemeId[];
-  readonly activeThemeId: ThemeId;
   readonly tutorialCompleted: boolean;
   readonly settings: { readonly sfxEnabled: boolean; readonly language: AppLanguage | null };
 }

@@ -1,12 +1,10 @@
 import Phaser from 'phaser';
 import { getRuntimeServices } from '../../meta/RuntimeServices.ts';
-import { toLocalDateKey } from '../../meta/daily/DailyDate.ts';
 import { BaseUiScene } from './BaseUiScene.ts';
 import { NavigationController } from '../navigation/NavigationController.ts';
 import { buildDailyViewModel, dailyCellState, type DailyDashboardViewModel } from '../daily/DailyViewModel.ts';
 import { computeCalendarCellBounds, computeDailyLayout } from '../daily/DailyCalendarLayout.ts';
 import { ActionCard } from '../components/ActionCard.ts';
-import { CoinPill } from '../components/CoinPill.ts';
 import { IconButton } from '../components/IconButton.ts';
 import { ModalShell } from '../components/ModalShell.ts';
 import { PaperPanel } from '../components/PaperPanel.ts';
@@ -17,6 +15,7 @@ import { UI_ICON_KEYS } from '../assets/UiAssets.ts';
 import { formatActiveTime } from '../game/GameHudViewModel.ts';
 import type { AppLanguage } from '../../i18n/Language.ts';
 import { formatMoveCount, monthName, tr } from '../../i18n/Localization.ts';
+import { productBridge } from '../bridge/TrifoldProductBridge.ts';
 
 interface CalendarCell {
   readonly surface: Phaser.GameObjects.Graphics;
@@ -67,7 +66,6 @@ export class DailyScene extends BaseUiScene {
   private selectedDateKey = '';
   private visibleMonth = '';
   private homeButton: IconButton | null = null;
-  private coinPill: CoinPill | null = null;
   private summaryPanel: PaperPanel | null = null;
   private calendarPanel: PaperPanel | null = null;
   private dailyAction: ActionCard | null = null;
@@ -78,6 +76,8 @@ export class DailyScene extends BaseUiScene {
   private previousMonth: IconButton | null = null;
   private nextMonth: IconButton | null = null;
   private readonly cells: CalendarCell[] = [];
+  private weekdays: Phaser.GameObjects.Text[] = [];
+  private summaryIcon: Phaser.GameObjects.Image | null = null;
   private confirmShell: ModalShell | null = null;
   private confirmText: Phaser.GameObjects.Text | null = null;
   private confirmCancel: ActionCard | null = null;
@@ -93,15 +93,15 @@ export class DailyScene extends BaseUiScene {
     this.cameras.main.setBackgroundColor(UI_TOKENS.color.table);
     getRuntimeServices().analytics.track('daily_open');
     this.navigation = new NavigationController(this.scene);
-    this.todayKey = toLocalDateKey(new Date());
+    const product = productBridge.snapshot();
+    this.todayKey = product.currentDailyId ?? new Date().toISOString().slice(0, 10);
     this.selectedDateKey = this.todayKey;
     this.visibleMonth = monthAnchor(this.todayKey);
     this.refreshViewModel();
-    const language = getRuntimeServices().language;
+    const language = productBridge.settingsSnapshot().language;
     const viewport = this.currentUiViewport();
 
     this.homeButton = new IconButton(this, viewport, { iconKey: UI_ICON_KEYS.back, enabled: true }, () => this.navigation?.home(), 20);
-    this.coinPill = new CoinPill(this, 20);
     this.summaryPanel = new PaperPanel(this, { depth: 10 });
     this.calendarPanel = new PaperPanel(this, { depth: 10 });
     this.dailyAction = new ActionCard(this, viewport, { title: tr(language, 'daily.playToday'), enabled: true, emphasis: 'highlight' }, () => this.pressSelectedDate(), 20);
@@ -109,6 +109,8 @@ export class DailyScene extends BaseUiScene {
     this.streakText = this.add.text(0, 0, '', { color: '#24302e', fontFamily: 'system-ui, sans-serif', align: 'center' }).setOrigin(0.5).setDepth(20);
     this.resultTextObject = this.add.text(0, 0, '', { color: '#64706a', fontFamily: 'system-ui, sans-serif', align: 'center', wordWrap: { width: 320 } }).setOrigin(0.5).setDepth(20);
     this.monthText = this.add.text(0, 0, monthLabel(this.visibleMonth, language), { color: '#24302e', fontFamily: 'Georgia, serif', fontStyle: 'bold' }).setOrigin(0.5).setDepth(20);
+    this.weekdays = tr(language, 'daily.weekdays').split(',').map(day => this.add.text(0, 0, day, { fontFamily: 'Georgia, serif', color: '#655a43' }).setOrigin(0.5).setDepth(20));
+    this.summaryIcon = this.add.image(0, 0, UI_ICON_KEYS.streak).setTint(UI_TOKENS.color.gold).setDepth(20);
     this.previousMonth = new IconButton(this, viewport, { iconKey: UI_ICON_KEYS.chevronLeft, enabled: true }, () => this.changeMonth(-1), 20);
     this.nextMonth = new IconButton(this, viewport, { iconKey: UI_ICON_KEYS.chevronRight, enabled: false }, () => this.changeMonth(1), 20);
     this.renderCalendarGrid(false);
@@ -117,8 +119,9 @@ export class DailyScene extends BaseUiScene {
   }
 
   protected layout(viewport: ResolvedUiViewport): void {
-    if (!this.homeButton || !this.coinPill || !this.summaryPanel || !this.calendarPanel || !this.dailyAction) return;
+    if (!this.homeButton || !this.summaryPanel || !this.calendarPanel || !this.dailyAction) return;
     const bounds = computeDailyLayout(viewport);
+    const css = viewport.minTouchTarget / 44;
     this.homeButton.setViewport(viewport);
     this.dailyAction.setViewport(viewport);
     this.previousMonth?.setViewport(viewport);
@@ -127,8 +130,6 @@ export class DailyScene extends BaseUiScene {
     this.summaryPanel.layout(bounds.summary);
     this.calendarPanel.layout(bounds.calendar);
 
-    const coinWidth = Math.min(bounds.header.width * 0.14, 150 * viewport.uiScale);
-    this.coinPill.layout({ x: bounds.header.x + bounds.header.width - coinWidth, y: bounds.header.y, width: coinWidth, height: bounds.header.height });
     this.title?.setPosition(bounds.header.x + bounds.header.width / 2, bounds.header.y + bounds.header.height / 2)
       .setFontSize(Math.max(20, Math.min(36, bounds.header.height * 0.48)));
 
@@ -138,10 +139,12 @@ export class DailyScene extends BaseUiScene {
       width: bounds.summary.width * 0.84,
       height: bounds.summary.height * 0.84,
     };
-    this.streakText?.setPosition(inner.x + inner.width / 2, inner.y + inner.height * 0.13)
-      .setFontSize(Math.max(13, Math.min(23, inner.height * 0.055)));
-    this.resultTextObject?.setWordWrapWidth(inner.width * 0.9).setPosition(inner.x + inner.width / 2, inner.y + inner.height * 0.36)
-      .setFontSize(Math.max(11, Math.min(18, inner.height * 0.043)));
+    const emblem = Math.min(inner.height * 0.12, 64 * css);
+    this.summaryIcon?.setDisplaySize(emblem, emblem).setPosition(inner.x + inner.width / 2, inner.y + inner.height * 0.10);
+    this.streakText?.setPosition(inner.x + inner.width / 2, inner.y + inner.height * 0.25)
+      .setFontSize(Math.max(13 * css, Math.min(23 * css, inner.height * 0.055)));
+    this.resultTextObject?.setWordWrapWidth(inner.width * 0.9).setPosition(inner.x + inner.width / 2, inner.y + inner.height * 0.43)
+      .setFontSize(Math.max(11 * css, Math.min(18 * css, inner.height * 0.043)));
     this.dailyAction.layout({ x: inner.x, y: inner.y + inner.height * 0.61, width: inner.width, height: inner.height * 0.20 });
 
     const navSize = Math.min(bounds.calendarHeader.height, Math.max(viewport.minTouchTarget, 56 * viewport.uiScale));
@@ -151,6 +154,10 @@ export class DailyScene extends BaseUiScene {
       .setFontSize(Math.max(14, Math.min(24, bounds.calendarHeader.height * 0.32)));
 
     const cellBounds = computeCalendarCellBounds(bounds.calendarGrid, 42);
+    this.weekdays.forEach((text, index) => {
+      const cell = cellBounds[index]!;
+      text.setPosition(cell.x + cell.width / 2, bounds.calendarGrid.y - 12 * css).setFontSize(12 * css);
+    });
     this.cells.forEach((cell, index) => this.layoutCell(cell, cellBounds[index] ?? bounds.calendarGrid, viewport));
     this.layoutConfirmation(viewport);
   }
@@ -159,7 +166,6 @@ export class DailyScene extends BaseUiScene {
     this.navigation = null;
     this.viewModel = null;
     this.homeButton = null;
-    this.coinPill = null;
     this.summaryPanel = null;
     this.calendarPanel = null;
     this.dailyAction = null;
@@ -167,6 +173,8 @@ export class DailyScene extends BaseUiScene {
     this.streakText = null;
     this.resultTextObject = null;
     this.monthText = null;
+    this.weekdays = [];
+    this.summaryIcon = null;
     this.previousMonth = null;
     this.nextMonth = null;
     this.cells.length = 0;
@@ -183,7 +191,8 @@ export class DailyScene extends BaseUiScene {
 
   private refreshViewModel(): void {
     const services = getRuntimeServices();
-    this.viewModel = buildDailyViewModel(services.repository.current, this.todayKey, services.catalog, services.language);
+    const product = productBridge.snapshot();
+    this.viewModel = buildDailyViewModel(product.state, product.activeDailyId, this.todayKey, services.catalog, productBridge.settingsSnapshot().language);
   }
 
   private requireViewModel(): DailyDashboardViewModel {
@@ -223,7 +232,7 @@ export class DailyScene extends BaseUiScene {
     const keys = monthCells(this.visibleMonth);
     this.destroyCalendarCells();
     this.createCalendarCells(keys, vm);
-    this.monthText?.setText(monthLabel(this.visibleMonth, getRuntimeServices().language));
+    this.monthText?.setText(monthLabel(this.visibleMonth, productBridge.settingsSnapshot().language));
     const oldest = vm.archive.at(-1)?.dateKey ?? vm.todayKey;
     const previous = shiftMonth(this.visibleMonth, -1);
     const next = shiftMonth(this.visibleMonth, 1);
@@ -236,19 +245,19 @@ export class DailyScene extends BaseUiScene {
     const vm = this.requireViewModel();
     const state = cell.dateKey ? dailyCellState(vm, cell.dateKey) : 'outside-archive';
     const selected = cell.dateKey === this.selectedDateKey;
-    const fill = state === 'today' ? UI_TOKENS.color.paperPressed
+    const fill = selected ? UI_TOKENS.color.control : state === 'today' ? UI_TOKENS.color.paperPressed
       : state === 'completed-on-time' ? 0xb9cba8
       : state === 'completed-archive' ? 0xb9c4c9
       : UI_TOKENS.color.paper;
-    const alpha = cell.dateKey ? (state === 'future' || state === 'outside-archive' ? 0.30 : 0.88) : 0;
+    const alpha = cell.dateKey ? (state === 'future' || state === 'outside-archive' ? 0.55 : 0.94) : 0;
     cell.surface.clear();
     if (cell.dateKey) {
       cell.surface.fillStyle(fill, alpha).fillRoundedRect(bounds.x, bounds.y, bounds.width, bounds.height, Math.max(4, bounds.height * 0.16));
       cell.surface.lineStyle(selected ? 3 : 1, selected ? UI_TOKENS.color.gold : UI_TOKENS.color.mutedInk, selected ? 1 : 0.35)
         .strokeRoundedRect(bounds.x, bounds.y, bounds.width, bounds.height, Math.max(4, bounds.height * 0.16));
     }
-    cell.label.setVisible(Boolean(cell.dateKey)).setAlpha(alpha).setPosition(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2)
-      .setFontSize(Math.max(9, Math.min(18, bounds.height * 0.30)));
+    cell.label.setColor(selected ? '#fff2d4' : '#24302e').setVisible(Boolean(cell.dateKey)).setAlpha(alpha).setPosition(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2)
+      .setFontSize(Math.max(10 * viewport.minTouchTarget / 44, Math.min(18 * viewport.minTouchTarget / 44, bounds.height * 0.30)));
     const hitHeight = Math.max(bounds.height, viewport.minTouchTarget);
     cell.zone.setPosition(bounds.x, bounds.y - (hitHeight - bounds.height) / 2).setSize(bounds.width, hitHeight);
   }
@@ -265,23 +274,21 @@ export class DailyScene extends BaseUiScene {
     const vm = this.requireViewModel();
     const day = vm.archive.find((item) => item.dateKey === this.selectedDateKey) ?? vm.archive[0];
     if (!day || !this.dailyAction) return;
-    const language = getRuntimeServices().language;
+    const language = productBridge.settingsSnapshot().language;
     const active = vm.activeDateKey === day.dateKey;
     const title = active ? tr(language, 'common.continue') : day.dateKey === vm.todayKey ? vm.today.ctaLabel : day.personalBest ? tr(language, 'common.replay') : tr(language, 'daily.playArchive');
-    const reward = day.rewardCoinsIfFirstWin > 0 ? ` · ${tr(language, 'daily.reward', { count: day.rewardCoinsIfFirstWin })}` : '';
-    this.dailyAction.setState({ title, subtitle: `${day.dateKey}${reward}`, emphasis: 'highlight', enabled: true });
+    this.dailyAction.setState({ title, subtitle: day.dateKey, emphasis: 'highlight', enabled: true });
     this.streakText?.setText(tr(language, 'daily.streakSummary', { current: vm.currentStreak, best: vm.bestStreak }));
     const officialResult = day.officialResult;
     const personalBest = day.personalBest;
     const lines = [tr(language, 'daily.official', { result: resultText(officialResult, language) }), tr(language, 'daily.personal', { result: resultText(personalBest, language) })];
     this.resultTextObject?.setText(lines.join('\n'));
-    this.coinPill?.setCoins(vm.coins);
   }
 
   private pressSelectedDate(): void {
     const vm = this.requireViewModel();
     if (vm.activeDateKey === this.selectedDateKey) {
-      this.navigation?.go('standard', { mode: 'resume-daily', dailyDateKey: this.selectedDateKey });
+      productBridge.resumeGame();
       return;
     }
     if (vm.activeDateKey && vm.activeDateKey !== this.selectedDateKey) {
@@ -291,13 +298,13 @@ export class DailyScene extends BaseUiScene {
     if (this.selectedDateKey !== vm.todayKey) {
       getRuntimeServices().analytics.track('daily_archive_open', { dateKey: this.selectedDateKey });
     }
-    this.navigation?.go('standard', { mode: 'new-daily', dailyDateKey: this.selectedDateKey });
+    productBridge.startDaily(this.selectedDateKey);
   }
 
   private confirmReplacement(): void {
     if (this.confirmShell) return;
     const viewport = this.currentUiViewport();
-    const language = getRuntimeServices().language;
+    const language = productBridge.settingsSnapshot().language;
     this.confirmShell = new ModalShell(this, tr(language, 'daily.confirmTitle'), () => this.closeConfirmation(), 5000);
     this.confirmText = this.add.text(0, 0, tr(language, 'daily.confirmBody'), {
       color: '#64706a', fontFamily: 'system-ui, sans-serif', align: 'center', wordWrap: { width: viewport.width * 0.5 },
@@ -309,7 +316,7 @@ export class DailyScene extends BaseUiScene {
         getRuntimeServices().analytics.track('daily_archive_open', { dateKey });
       }
       this.closeConfirmation();
-      this.navigation?.go('standard', { mode: 'new-daily', dailyDateKey: dateKey });
+      productBridge.startDaily(dateKey);
     }, 5002);
     this.layoutConfirmation(viewport);
   }

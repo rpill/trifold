@@ -11,7 +11,7 @@ function intersects(a: {x:number;y:number;width:number;height:number}, b: {x:num
 test('HUD formats difficulty, decisions, active time and assisted state', () => {
   const vm = buildGameHudViewModel({
     difficulty: 'hard', moves: 42, activeMs: 65_400, assisted: true,
-    canUndo: true, coins: 123, hintEligible: false,
+    canUndo: true, hintEligible: false,
   });
   assert.equal(vm.difficultyLabel, 'Сложная');
   assert.equal(vm.movesLabel, '42 хода');
@@ -19,10 +19,10 @@ test('HUD formats difficulty, decisions, active time and assisted state', () => 
   assert.equal(vm.assisted, true);
   assert.equal(vm.undoEnabled, true);
   assert.equal(vm.hintEnabled, false);
-  assert.equal(vm.coins, 123);
+  assert.equal('coins' in vm, false);
 });
 
-for (const [width, height] of [[1920,1080],[1280,720],[844,390]] as const) {
+for (const [width, height] of [[1920,1080],[1366,768],[1280,640],[844,390],[915,412]] as const) {
   test(`HUD lives outside the board and keeps touch controls usable at ${width}x${height}`, () => {
     const board = calculateViewportLayout(width, height);
     const hud = calculateGameHudLayout(board);
@@ -37,7 +37,7 @@ for (const [width, height] of [[1920,1080],[1280,720],[844,390]] as const) {
 test('HUD can show Daily mode label instead of Standard difficulty', () => {
   const vm = buildGameHudViewModel({
     modeLabel: 'Daily', moves: 12, activeMs: 10_000, assisted: false,
-    canUndo: false, coins: 20, hintEligible: false,
+    canUndo: false, hintEligible: false,
   });
   assert.equal(vm.difficultyLabel, 'Daily');
 });
@@ -46,7 +46,7 @@ test('HUD can show Daily mode label instead of Standard difficulty', () => {
 test('HUD renders English difficulty and move copy', () => {
   const vm = buildGameHudViewModel({
     difficulty: 'hard', moves: 42, activeMs: 65_400, assisted: true,
-    canUndo: true, coins: 123, hintEligible: true,
+    canUndo: true, hintEligible: true,
   }, 'en');
   assert.equal(vm.difficultyLabel, 'Hard');
   assert.equal(vm.movesLabel, '42 moves');
@@ -55,4 +55,12 @@ test('HUD renders English difficulty and move copy', () => {
   assert.equal(vm.undoLabel, 'Undo');
   assert.equal(vm.hintLabel, 'Hint');
   assert.equal(vm.assistedLabel, 'Assisted');
+});
+
+
+test('HUD view model uses MetaSave-era StandardDifficulty rather than legacy profile types', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../src/ui/game/GameHudViewModel.ts', import.meta.url), 'utf8');
+  assert.equal(source.includes('meta/profile/ProfileTypes'), false);
+  assert.match(source, /meta\/MetaSave/);
 });

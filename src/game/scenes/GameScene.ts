@@ -1,9 +1,11 @@
 import Phaser from 'phaser';
+import { SceneBackdrop } from '../../ui/components/SceneBackdrop.ts';
 import { canCollectDragons } from '../model/TrifoldRules.ts';
 import type { DragonFamily } from '../model/types.ts';
 import { HintWorkerClient } from '../hints/HintWorkerClient.ts';
 import { HintCoordinator } from '../../meta/hints/HintCoordinator.ts';
 import { TrifoldBoardView } from '../view/TrifoldBoardView.ts';
+import { TRIFOLD_APPEARANCE } from '../appearance/GameAppearance.ts';
 import {
   calculateViewportLayout,
   scaleViewportLayout,
@@ -12,7 +14,7 @@ import {
   type ViewportLayout,
 } from '../view/ViewportLayout.ts';
 import { getRuntimeServices } from '../../meta/RuntimeServices.ts';
-import type { StandardDifficulty } from '../../meta/profile/ProfileTypes.ts';
+import type { StandardDifficulty } from '../../meta/MetaSave.ts';
 import {
   StandardSessionController,
   type StandardSessionViewState,
@@ -21,8 +23,7 @@ import type { StandardWinSettlementResult } from '../../meta/standard/StandardWi
 import { DailySessionController, type DailySessionViewState } from '../../meta/daily/DailySessionController.ts';
 import type { DailyWinSettlementResult } from '../../meta/daily/DailyWinSettlement.ts';
 import { toLocalDateKey } from '../../meta/daily/DailyDate.ts';
-import { buildStandardWinViewModel, type StandardWinViewModel } from '../../ui/win/StandardWinViewModel.ts';
-import { claimRewardDouble, createRewardDoubleOffer, type RewardDoubleOffer } from '../../meta/economy/RewardDouble.ts';
+import { buildStandardWinViewModel } from '../../ui/win/StandardWinViewModel.ts';
 import { WinOverlay, buildStandardWinOverlayContent } from '../../ui/win/WinOverlay.ts';
 import { SFX_ASSETS, SfxController } from '../../settings/SfxController.ts';
 import { GameHud } from '../../ui/game/GameHud.ts';
@@ -32,6 +33,8 @@ import { GameplayActivity } from '../../platform/GameplayActivity.ts';
 import { TutorialController } from '../../tutorial/TutorialController.ts';
 import { tutorialText } from '../../tutorial/TutorialText.ts';
 import { tr } from '../../i18n/Localization.ts';
+import { productBridge, syncProductLeaderboards } from '../../ui/bridge/TrifoldProductBridge.ts';
+import { deriveBestStreak } from '../../meta/daily/DailyHistory.ts';
 
 type ControlVariant = 'default' | 'dragon';
 type StandardLaunchMode = 'new-standard' | 'resume-standard' | 'tutorial';
@@ -106,15 +109,14 @@ export class GameScene extends Phaser.Scene {
   private sfx: SfxController | null = null;
   private readonly missingSfxKeys = new Set<string>();
   private currentLayout: ViewportLayout | null = null;
+  private backdrop: SceneBackdrop | null = null;
   private gameHud: GameHud | null = null;
-  private currentCoins = 0;
   private readonly dragonControls = new Map<DragonFamily, SceneControl>();
   private boardReady = false;
   private victoryAnnounced = false;
   private victoryOverlay: WinOverlay | null = null;
   private blockingMessage: Phaser.GameObjects.Text | null = null;
   private sessionStarting = false;
-  private rewardDoubleClaiming = false;
   private gameplayActivity: GameplayActivity | null = null;
   private platformPauseUnsubscribe: (() => void) | null = null;
   private hintWorker: HintWorkerClient | null = null;
@@ -154,8 +156,9 @@ export class GameScene extends Phaser.Scene {
     const generation = ++this.sceneGeneration;
     this.sessionStarting = false;
     const runtime = getRuntimeServices();
-    runtime.theme.setTheme(runtime.repository.current.activeThemeId);
-    this.cameras.main.setBackgroundColor(runtime.theme.boardSurfaceColor);
+    this.cameras.main.setBackgroundColor(TRIFOLD_APPEARANCE.boardSurfaceColor);
+    this.backdrop = new SceneBackdrop(this, 'game', TRIFOLD_APPEARANCE.boardSurfaceColor);
+    this.backdrop.layout(this.scale.width, this.scale.height);
     this.input.dragDistanceThreshold = 7;
     const sound = this.sound;
     this.sfx = new SfxController({
@@ -163,13 +166,13 @@ export class GameScene extends Phaser.Scene {
       exists: (key) => !this.missingSfxKeys.has(key) && this.cache.audio.exists(key),
       play: (key, config) => this.sound.play(key, config),
     });
-    this.sfx.setEnabled(runtime.repository.current.settings.sfxEnabled);
+    this.sfx.setEnabled(runtime.preferences.soundEnabled);
 
     this.createControls();
     this.gameplayActivity = new GameplayActivity(runtime.platform.gameplay);
     this.gameplayActivity.setDocumentVisible(document.visibilityState === 'visible');
-    this.gameplayActivity.setPlatformPaused(runtime.platform.pause.isPaused());
-    this.platformPauseUnsubscribe = runtime.platform.pause.subscribe((paused) => {
+    this.gameplayActivity.setPlatformPaused(runtime.platform.platformPause.isPaused());
+    this.platformPauseUnsubscribe = runtime.platform.platformPause.subscribe((paused) => {
       this.gameplayActivity?.setPlatformPaused(paused);
       this.session?.setVisible(document.visibilityState === 'visible' && !paused);
     });
@@ -195,6 +198,8 @@ export class GameScene extends Phaser.Scene {
       this.tutorialTextObject?.destroy();
       this.tutorialTextObject = null;
       this.board?.destroy();
+      this.backdrop?.destroy();
+      this.backdrop = null;
       this.destroyControls();
       this.session = null;
     });
@@ -224,13 +229,17 @@ export class GameScene extends Phaser.Scene {
         await this.startNewDaily(this.launchData.dailyDateKey, generation);
         return;
       }
-      if (mode === 'resume-standard' && services.repository.current.activeStandard) {
-        const session = StandardSessionController.resume({ repository: services.repository, wallNow: this.platformWallNow });
+      if (mode === 'resume-standard' && services.activeGames.load()?.mode === 'standard') {
+        const session = StandardSessionController.resume({
+          metaSession: services.metaSession,
+          activeGames: services.activeGames,
+          wallNow: this.platformWallNow,
+        });
         if (!this.isCurrentSceneGeneration(generation)) return;
         this.mountSession(session, false);
         return;
       }
-      await this.startNewStandard(this.launchData.difficulty ?? services.repository.current.selectedStandardDifficulty, generation);
+      await this.startNewStandard(this.launchData.difficulty ?? services.metaSession.state.standard.selectedDifficulty, generation);
     } catch (error) {
       if (!this.isCurrentSceneGeneration(generation)) return;
       console.error('[Trifold] session failed to initialize', error);
@@ -253,7 +262,8 @@ export class GameScene extends Phaser.Scene {
   private startTutorial(): void {
     const services = getRuntimeServices();
     const session = StandardSessionController.startTutorial({
-      repository: services.repository,
+      metaSession: services.metaSession,
+      activeGames: services.activeGames,
       wallNow: this.platformWallNow,
     });
     this.mountSession(session, false, true);
@@ -266,16 +276,19 @@ export class GameScene extends Phaser.Scene {
     this.refreshControls();
     try {
       const services = getRuntimeServices();
-      const replacingSavedStandard = services.repository.current.activeStandard !== null;
+      const replacingSavedStandard = services.activeGames.load()?.mode === 'standard';
       const previous = this.session;
       if (previous) {
         previous.setVisible(false);
         await previous.flushPersistence();
         if (!this.isCurrentSceneGeneration(generation)) return;
       }
-      const requestedDifficulty = difficulty ?? services.repository.current.selectedStandardDifficulty;
+      const requestedDifficulty = difficulty ?? services.metaSession.state.standard.selectedDifficulty;
+      await services.standardAds.beforeFreshStandardDeal();
+      if (!this.isCurrentSceneGeneration(generation)) return;
       const session = await StandardSessionController.startNew({
-        repository: services.repository,
+        metaSession: services.metaSession,
+        activeGames: services.activeGames,
         catalog: services.catalog,
         requestedDifficulty,
         randomIndex: randomVerifiedIndex,
@@ -314,12 +327,14 @@ export class GameScene extends Phaser.Scene {
         await previous.flushPersistence();
         if (!this.isCurrentSceneGeneration(generation)) return;
       }
-      const todayKey = toLocalDateKey(new Date());
+      const todayKey = this.currentDateKey();
       const common = {
-        repository: services.repository,
+        metaSession: services.metaSession,
+        activeGames: services.activeGames,
         catalog: services.catalog,
         todayKey,
-        calendarDateKeyNow: () => toLocalDateKey(new Date()),
+        trustedClock: services.platform.trustedClock,
+        calendarDateKeyNow: () => this.currentDateKey(),
         wallNow: this.platformWallNow,
       } as const;
       const session = dailyDateKey === todayKey
@@ -346,12 +361,14 @@ export class GameScene extends Phaser.Scene {
 
   private async resumeDaily(generation = this.sceneGeneration): Promise<void> {
     const services = getRuntimeServices();
-    const todayKey = toLocalDateKey(new Date());
+    const todayKey = this.currentDateKey();
     const session = await DailySessionController.resumeOrClearExpired({
-      repository: services.repository,
+      metaSession: services.metaSession,
+      activeGames: services.activeGames,
       catalog: services.catalog,
       todayKey,
-      calendarDateKeyNow: () => toLocalDateKey(new Date()),
+      trustedClock: services.platform.trustedClock,
+      calendarDateKeyNow: () => this.currentDateKey(),
       wallNow: this.platformWallNow,
     });
     if (!this.isCurrentSceneGeneration(generation)) return;
@@ -386,8 +403,7 @@ export class GameScene extends Phaser.Scene {
       this.hintWorker = new HintWorkerClient();
       this.hintCoordinator = new HintCoordinator(session, this.hintWorker);
     }
-    this.currentCoins = runtime.repository.current.coins;
-    session.setVisible(document.visibilityState === 'visible' && !runtime.platform.pause.isPaused());
+    session.setVisible(document.visibilityState === 'visible' && !runtime.platform.platformPause.isPaused());
     this.gameplayActivity?.setBlockingOverlayOpen(false);
     this.gameplayActivity?.setBoardActive(!session.viewState.won);
     this.board?.destroy();
@@ -424,7 +440,7 @@ export class GameScene extends Phaser.Scene {
       },
       sound: (cue) => this.sfx?.play(cue),
       settled: () => { void this.handleSettled(session); },
-    }, layout, getRuntimeServices().theme);
+    }, layout);
     this.board = board;
     this.applyControlLayout(layout);
     this.refreshControls();
@@ -472,7 +488,7 @@ export class GameScene extends Phaser.Scene {
   private handleServiceOverlayClosed(): void {
     const session = this.session;
     if (!session) return;
-    this.sfx?.setEnabled(getRuntimeServices().repository.current.settings.sfxEnabled);
+    this.sfx?.setEnabled(getRuntimeServices().preferences.soundEnabled);
     session.setBlockingOverlayOpen(false);
     this.board?.setUiPaused(false);
     this.gameplayActivity?.setBlockingOverlayOpen(false);
@@ -547,9 +563,9 @@ export class GameScene extends Phaser.Scene {
       try {
         const runtime = getRuntimeServices();
         if (session instanceof DailySessionController) {
-          const beforeBestStreak = runtime.repository.current.daily.bestStreak;
+          const todayKey = this.currentDateKey();
+          const beforeBestStreak = deriveBestStreak(runtime.metaSession.state.daily.records, runtime.metaSession.state.daily.bestStreakFloor);
           const settlement = await session.settleWin();
-          this.currentCoins = settlement.profile.coins;
           const event = session.viewState.kind === 'archive' ? 'daily_archive_win' : 'daily_win';
           runtime.analytics.track(event, {
             dateKey: session.viewState.dailyDateKey,
@@ -557,23 +573,19 @@ export class GameScene extends Phaser.Scene {
             activeMs: session.viewState.activeMs,
             firstCompletion: settlement.firstCompletion,
           });
-          if (settlement.completedOnTime && settlement.firstCompletion) {
-            runtime.analytics.track('streak_changed', { bestStreak: settlement.profile.daily.bestStreak });
-          }
-          if (settlement.profile.daily.bestStreak !== beforeBestStreak && !settlement.completedOnTime) {
-            runtime.analytics.track('streak_changed', { bestStreak: settlement.profile.daily.bestStreak });
-          }
+          const nextBestStreak = deriveBestStreak(settlement.state.daily.records, settlement.state.daily.bestStreakFloor);
+          if (nextBestStreak !== beforeBestStreak) runtime.analytics.track('streak_changed', { bestStreak: nextBestStreak });
           if (settlement.rankAdvancedTo) runtime.analytics.track('mastery_rank_up', { rank: settlement.rankAdvancedTo });
-          void runtime.leaderboards.syncFromProfile(settlement.profile, toLocalDateKey(new Date()), runtime.catalog);
+          void syncProductLeaderboards(runtime.leaderboards, settlement.state, 'daily', session.viewState.dailyDateKey, todayKey)
+            .catch((error) => console.warn('[Trifold] leaderboard sync failed', error));
+          productBridge.notify();
           if (this.session === session) this.showDailyVictory(settlement, session.viewState);
         } else {
-          let settlement = await session.settleWin();
+          const settlement = await session.settleWin();
           if (this.tutorialController?.recordWin()) {
-            const completedProfile = await runtime.repository.mutate((profile) => ({ ...profile, tutorialCompleted: true }));
-            settlement = { ...settlement, profile: completedProfile };
+            runtime.preferences.markHowToPlaySeen();
             runtime.analytics.track('tutorial_complete');
           }
-          this.currentCoins = settlement.profile.coins;
           runtime.analytics.track('standard_win', {
             difficulty: session.viewState.difficulty,
             partition: session.viewState.partition,
@@ -583,7 +595,9 @@ export class GameScene extends Phaser.Scene {
             firstCompletion: settlement.firstCompletion,
           });
           if (settlement.rankAdvancedTo) runtime.analytics.track('mastery_rank_up', { rank: settlement.rankAdvancedTo });
-          void runtime.leaderboards.syncFromProfile(settlement.profile, toLocalDateKey(new Date()), runtime.catalog);
+          void syncProductLeaderboards(runtime.leaderboards, settlement.state, 'standard', null, this.currentDateKey())
+            .catch((error) => console.warn('[Trifold] leaderboard sync failed', error));
+          productBridge.notify();
           if (this.session === session) this.showVictory(settlement, session.viewState);
         }
       } catch (error) {
@@ -596,14 +610,19 @@ export class GameScene extends Phaser.Scene {
 
   private handleVisibilityChange = (): void => {
     const visible = document.visibilityState === 'visible';
-    const paused = getRuntimeServices().platform.pause.isPaused();
+    const paused = getRuntimeServices().platform.platformPause.isPaused();
     this.gameplayActivity?.setDocumentVisible(visible);
     this.session?.setVisible(visible && !paused);
   };
 
-  private platformWallNow = (): number => getRuntimeServices().platform.clock.nowMs() ?? Date.now();
+  private platformWallNow = (): number => getRuntimeServices().platform.trustedClock.nowMs() ?? Date.now();
+
+  private currentDateKey(): string {
+    return toLocalDateKey(new Date(this.platformWallNow()));
+  }
 
   private handleResize(): void {
+    this.backdrop?.layout(this.scale.width, this.scale.height);
     this.clearHintVisuals();
     const layout = this.calculateBackingLayout();
     this.currentLayout = layout;
@@ -672,8 +691,14 @@ export class GameScene extends Phaser.Scene {
       : (control.enabled ? 0.9 : 0.35);
     control.graphics.fillStyle(fillColor, fillAlpha);
     control.graphics.lineStyle(Math.max(1, bounds.height * ((control.hinted || control.tutorialHinted) ? 0.07 : 0.04)), lineColor, (control.hinted || control.tutorialHinted) ? 1 : lineAlpha);
-    control.graphics.fillRoundedRect(bounds.x, bounds.y, bounds.width, bounds.height, Math.max(4, bounds.height * 0.18));
-    control.graphics.strokeRoundedRect(bounds.x, bounds.y, bounds.width, bounds.height, Math.max(4, bounds.height * 0.18));
+    const radius = dragon ? Math.min(bounds.width, bounds.height) / 2 : Math.max(4, bounds.height * 0.18);
+    control.graphics.fillRoundedRect(bounds.x, bounds.y, bounds.width, bounds.height, radius);
+    control.graphics.strokeRoundedRect(bounds.x, bounds.y, bounds.width, bounds.height, radius);
+    if (dragon) {
+      const inset = Math.max(3, bounds.width * 0.09);
+      control.graphics.lineStyle(Math.max(0.7, bounds.width * 0.012), 0xf0d778, control.completed ? 0.18 : 0.40)
+        .strokeCircle(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2, radius - inset);
+    }
     control.label.setPosition(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
     control.label.setFontSize(Math.max(9, Math.min(bounds.height * 0.34, bounds.width / Math.max(3, control.text.length * 0.58))));
     control.label.setColor(
@@ -728,10 +753,9 @@ export class GameScene extends Phaser.Scene {
         modeLabel: 'Daily',
         moves: state.moves,
         activeMs: state.activeMs,
-        assisted: false,
+        assisted: state.assisted,
         canUndo: this.boardReady && session.canUndo,
-        coins: this.currentCoins,
-        hintEligible: false,
+          hintEligible: false,
       }, language);
     }
     const state = session.viewState;
@@ -741,7 +765,6 @@ export class GameScene extends Phaser.Scene {
       activeMs: state.activeMs,
       assisted: state.assisted,
       canUndo: this.boardReady && session.canUndo,
-      coins: this.currentCoins,
       hintEligible: this.tutorialController === null
         && this.boardReady
         && !state.won
@@ -771,65 +794,15 @@ export class GameScene extends Phaser.Scene {
     this.hideVictory();
     const services = getRuntimeServices();
     const viewModel = buildStandardWinViewModel(settlement, viewState, services.language);
-    const offer = createRewardDoubleOffer({
-      seed: viewState.seed,
-      difficulty: viewState.difficulty,
-      baseCoinsGranted: settlement.baseCoinsGranted,
-      firstCompletion: settlement.firstCompletion,
-    });
-    const canDouble = offer !== null && services.rewardedAds.available;
-    const baseContent = buildStandardWinOverlayContent(viewModel, services.language);
     this.victoryOverlay = new WinOverlay(
       this,
-      {
-        ...baseContent,
-        rewardActionLabel: canDouble ? tr(services.language, 'win.doubleCoins') : null,
-        rewardActionEnabled: canDouble,
-      },
+      buildStandardWinOverlayContent(viewModel, services.language),
       {
         newDeal: () => { void this.startNewStandard(); },
         home: () => this.goHome(),
-        ...(canDouble && offer ? { doubleCoins: () => { void this.claimStandardRewardDouble(offer, viewModel, viewState.seed); } } : {}),
       },
     );
     if (this.currentLayout) this.victoryOverlay.layout(this.currentLayout);
-  }
-
-  private async claimStandardRewardDouble(offer: RewardDoubleOffer, viewModel: StandardWinViewModel, seed: number): Promise<void> {
-    if (this.rewardDoubleClaiming) return;
-    const services = getRuntimeServices();
-    if (!services.rewardedAds.available || !this.victoryOverlay) return;
-    const overlay = this.victoryOverlay;
-    const idleContent = buildStandardWinOverlayContent(viewModel, services.language);
-    this.rewardDoubleClaiming = true;
-    services.analytics.track('reward_double_attempt', { seed, bonusCoins: offer.bonusCoins });
-    overlay.setContent({ ...idleContent, rewardActionLabel: tr(services.language, 'common.loading'), rewardActionEnabled: false });
-    if (this.currentLayout) overlay.layout(this.currentLayout);
-    try {
-      const rewarded = await services.rewardedAds.showRewarded();
-      if (!rewarded) {
-        if (this.victoryOverlay === overlay) {
-          overlay.setContent({ ...idleContent, rewardActionLabel: tr(services.language, 'win.doubleCoins'), rewardActionEnabled: true });
-        }
-        return;
-      }
-      const profile = await services.repository.mutate((current) => claimRewardDouble(current, offer));
-      services.analytics.track('reward_double_success', { seed, bonusCoins: offer.bonusCoins });
-      this.currentCoins = profile.coins;
-      this.refreshHud();
-      if (this.victoryOverlay === overlay) {
-        const rewardLine = [idleContent.rewardLine, tr(services.language, 'common.bonusAd', { count: offer.bonusCoins })].filter(Boolean).join(' · ');
-        overlay.setContent({ ...idleContent, rewardLine, rewardActionLabel: null, rewardActionEnabled: false });
-      }
-    } catch (error) {
-      console.error('[Trifold] rewarded double failed', error);
-      if (this.victoryOverlay === overlay) {
-        overlay.setContent({ ...idleContent, rewardActionLabel: tr(services.language, 'win.doubleCoins'), rewardActionEnabled: true });
-      }
-    } finally {
-      this.rewardDoubleClaiming = false;
-      if (this.victoryOverlay === overlay && this.currentLayout) overlay.layout(this.currentLayout);
-    }
   }
 
 
@@ -838,7 +811,7 @@ export class GameScene extends Phaser.Scene {
     viewState: DailySessionViewState,
   ): void {
     this.hideVictory();
-    const todayKey = toLocalDateKey(new Date());
+    const todayKey = this.currentDateKey();
     this.victoryOverlay = new WinOverlay(
       this,
       buildDailyWinOverlayContent(settlement, viewState, todayKey, getRuntimeServices().language),

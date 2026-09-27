@@ -163,3 +163,59 @@ test('compact service rail uses at least 44 CSS px controls without changing boa
   assert.equal(compact.cardWidth, baseline.cardWidth);
   assert.equal(compact.tableauY, baseline.tableauY);
 });
+
+test('dragon controls stay in one vertical column between free cells and foundations as cards responsively scale', () => {
+  const presets = [[667, 375], [844, 390], [1440, 900], [1920, 1080]] as const;
+  for (const [width, height] of presets) {
+    const layout = calculateViewportLayout(width, height);
+    const [first, second, third] = layout.dragonControls;
+    assert.equal(first.x, second.x);
+    assert.equal(second.x, third.x);
+    assert.ok(first.y + first.height < second.y);
+    assert.ok(second.y + second.height < third.y);
+    for (const control of layout.dragonControls) {
+      assertInside(control, layout.boardBounds);
+      assert.ok(control.x >= layout.freeCells[2].x + layout.cardWidth);
+      assert.ok(control.x + control.width <= layout.flowerFoundation.x);
+      assert.ok(control.y + control.height < layout.tableauY);
+    }
+  }
+});
+
+test('desktop card scale grows with available gameplay area instead of stopping at the old fixed preference', () => {
+  const fullHd = calculateViewportLayout(1920, 1080);
+  const laptop = calculateViewportLayout(1366, 768);
+  const short = calculateViewportLayout(1280, 640);
+  assert.ok(fullHd.cardWidth >= 160, `1920x1080 should use the table area: ${fullHd.cardWidth}`);
+  assert.ok(laptop.cardWidth >= 124, `1366x768 cards are too small: ${laptop.cardWidth}`);
+  assert.ok(short.cardWidth >= 118, `1280x640 cards regressed: ${short.cardWidth}`);
+  assert.ok(fullHd.cardWidth > laptop.cardWidth);
+  assert.ok(laptop.cardWidth >= short.cardWidth);
+});
+
+test('product-shell stress viewports keep board slots, service rail and long tableau inside the safe viewport', () => {
+  const presets = [
+    [1920, 1080], [1366, 768], [1280, 640], [844, 390], [915, 412],
+  ] as const;
+  for (const [width, height] of presets) {
+    const layout = calculateViewportLayout(width, height);
+    const safeViewport: Rect = {
+      x: layout.safeArea.left,
+      y: layout.safeArea.top,
+      width: width - layout.safeArea.left - layout.safeArea.right,
+      height: height - layout.safeArea.top - layout.safeArea.bottom,
+    };
+    const fixedRects: Rect[] = [
+      ...layout.freeCells.map((p) => cardRect(p.x, p.y, layout.cardWidth, layout.cardHeight)),
+      cardRect(layout.flowerFoundation.x, layout.flowerFoundation.y, layout.cardWidth, layout.cardHeight),
+      ...layout.foundations.map((p) => cardRect(p.x, p.y, layout.cardWidth, layout.cardHeight)),
+      ...layout.dragonControls,
+      layout.homeControl,
+      layout.newDealControl,
+      layout.undoControl,
+    ];
+    for (const rect of fixedRects) assertInside(rect, safeViewport);
+    const longBottom = tableauCardY(layout, 14, 13) + layout.cardHeight;
+    assert.ok(longBottom <= layout.boardBounds.y + layout.boardBounds.height - layout.bottomMargin + 1e-6, `${width}x${height}: long tableau clips`);
+  }
+});

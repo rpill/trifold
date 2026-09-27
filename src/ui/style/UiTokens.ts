@@ -1,14 +1,14 @@
 export const UI_TOKENS = {
   color: {
-    table: 0x123b34,
-    control: 0x173f38,
+    table: 0x082f27,
+    control: 0x123d32,
     controlActive: 0x24584d,
-    paper: 0xf0e6d3,
+    paper: 0xf7ecd6,
     paperPressed: 0xd9c7a8,
     ink: 0x1b2e29,
     mutedInk: 0x68746d,
-    gold: 0xb8904f,
-    goldLight: 0xd8bc82,
+    gold: 0xbc9756,
+    goldLight: 0xe4c78a,
     danger: 0xb86262,
     overlay: 0x0d1f1e,
   },
@@ -18,6 +18,5 @@ export const UI_TOKENS = {
   asset: {
     homeBackground: 'ui.home.background',
     paperPanel: 'ui.panel.paper',
-    coinIcon: 'ui.icon.coin',
   },
 } as const;

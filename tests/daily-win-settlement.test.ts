@@ -1,78 +1,75 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createDefaultProfile } from '../src/meta/profile/ProfileSchema.ts';
-import { settleDailyWin, isBetterAttempt } from '../src/meta/daily/DailyWinSettlement.ts';
+import { createDefaultMetaSave } from '../src/meta/MetaSave.ts';
+import { beginDailyAttempt, isBetterAttempt, settleDailyWin } from '../src/meta/daily/DailyWinSettlement.ts';
 
-test('first on-time Daily stores immutable official result and grants 15 coins', () => {
-  const result = settleDailyWin(createDefaultProfile(), {
-    dailyDateKey: '2026-09-14', completionDateKey: '2026-09-14', moves: 42, activeMs: 378_400,
+test('first on-time ranked Daily stores immutable official result and personal best', () => {
+  const begun = beginDailyAttempt(createDefaultMetaSave(), '2026-09-14', { attemptId: 'daily-2026-09-14~1', rankingEligible: true });
+  const result = settleDailyWin(begun, {
+    dailyDateKey: '2026-09-14', completionDateKey: '2026-09-14', attemptId: 'daily-2026-09-14~1', moves: 42, activeMs: 378_400,
   });
-  const entry = result.profile.daily.history['2026-09-14'];
+  const entry = result.state.daily.records['2026-09-14'];
+  assert.equal(entry?.attempts, 1);
   assert.deepEqual(entry?.officialResult, { moves: 42, activeMs: 378_400 });
   assert.deepEqual(entry?.personalBest, { moves: 42, activeMs: 378_400 });
   assert.equal(entry?.completedOnTime, true);
-  assert.equal(result.coinsGranted, 15);
-  assert.equal(result.profile.coins, 15);
-  assert.deepEqual(result.profile.futurePrestige.onTimeDailyDates, ['2026-09-14']);
+  assert.deepEqual(result.state.futurePrestige.onTimeDailyDates, ['2026-09-14']);
 });
 
-test('replay can improve personal best but cannot replace official first win or pay again', () => {
-  const first = settleDailyWin(createDefaultProfile(), {
-    dailyDateKey: '2026-09-14', completionDateKey: '2026-09-14', moves: 42, activeMs: 378_400,
+test('replay can improve personal best but cannot replace first official result', () => {
+  const firstBegin = beginDailyAttempt(createDefaultMetaSave(), '2026-09-14', { attemptId: 'daily-2026-09-14~1', rankingEligible: true });
+  const first = settleDailyWin(firstBegin, {
+    dailyDateKey: '2026-09-14', completionDateKey: '2026-09-14', attemptId: 'daily-2026-09-14~1', moves: 42, activeMs: 378_400,
   });
-  const replay = settleDailyWin(first.profile, {
-    dailyDateKey: '2026-09-14', completionDateKey: '2026-09-14', moves: 39, activeMs: 300_000,
+  const replayBegin = beginDailyAttempt(first.state, '2026-09-14', { attemptId: 'daily-2026-09-14~2', rankingEligible: false });
+  const replay = settleDailyWin(replayBegin, {
+    dailyDateKey: '2026-09-14', completionDateKey: '2026-09-14', attemptId: 'daily-2026-09-14~2', moves: 39, activeMs: 300_000,
   });
-  const entry = replay.profile.daily.history['2026-09-14'];
+  const entry = replay.state.daily.records['2026-09-14'];
+  assert.equal(entry?.attempts, 2);
   assert.deepEqual(entry?.officialResult, { moves: 42, activeMs: 378_400 });
   assert.deepEqual(entry?.personalBest, { moves: 39, activeMs: 300_000 });
-  assert.equal(replay.coinsGranted, 0);
-  assert.equal(replay.profile.coins, 15);
-  assert.equal(replay.profile.futurePrestige.onTimeDailyDates.length, 1);
+  assert.equal(replay.firstCompletion, false);
+  assert.equal(replay.improvedBest, true);
+  assert.equal(replay.state.futurePrestige.onTimeDailyDates.length, 1);
 });
 
-test('archive first completion grants 5 coins and never creates official result or on-time Mastery credit', () => {
-  const profile = {
-    ...createDefaultProfile(),
-    mastery: { rank: 'expert' as const, stage: { anyWins: 0, mediumWins: 0, hardWins: 0, onTimeDailyWins: 0 } },
-  };
-  const result = settleDailyWin(profile, {
-    dailyDateKey: '2026-09-13', completionDateKey: '2026-09-14', moves: 55, activeMs: 480_000,
+test('only the captured first ranking attempt may create the official result', () => {
+  let state = beginDailyAttempt(createDefaultMetaSave(), '2026-09-14', { attemptId: 'daily-2026-09-14~1', rankingEligible: true });
+  state = beginDailyAttempt(state, '2026-09-14', { attemptId: 'daily-2026-09-14~2', rankingEligible: true });
+  const result = settleDailyWin(state, {
+    dailyDateKey: '2026-09-14', completionDateKey: '2026-09-14', attemptId: 'daily-2026-09-14~2', moves: 30, activeMs: 200_000,
   });
-  const entry = result.profile.daily.history['2026-09-13'];
+  assert.equal(result.state.daily.records['2026-09-14']?.rankingAttemptId, 'daily-2026-09-14~1');
+  assert.equal(result.state.daily.records['2026-09-14']?.officialResult, undefined);
+  assert.deepEqual(result.state.daily.records['2026-09-14']?.personalBest, { moves: 30, activeMs: 200_000 });
+});
+
+test('archive first completion is late, has no official result and gives no on-time Mastery credit', () => {
+  const base = createDefaultMetaSave();
+  const state = { ...base, mastery: { rank: 'expert' as const, stage: { anyWins: 0, mediumWins: 0, hardWins: 20, onTimeDailyWins: 2 } } };
+  const begun = beginDailyAttempt(state, '2026-09-13', { attemptId: 'daily-2026-09-13~1', rankingEligible: false });
+  const result = settleDailyWin(begun, {
+    dailyDateKey: '2026-09-13', completionDateKey: '2026-09-14', attemptId: 'daily-2026-09-13~1', moves: 55, activeMs: 480_000,
+  });
+  const entry = result.state.daily.records['2026-09-13'];
   assert.equal(entry?.completedOnTime, false);
-  assert.equal(entry?.officialResult, null);
+  assert.equal(entry?.officialResult, undefined);
   assert.deepEqual(entry?.personalBest, { moves: 55, activeMs: 480_000 });
-  assert.equal(result.coinsGranted, 5);
-  assert.equal(result.profile.mastery.stage.onTimeDailyWins, 0);
-  assert.deepEqual(result.profile.futurePrestige.onTimeDailyDates, []);
+  assert.equal(result.state.mastery.stage.onTimeDailyWins, 2);
+  assert.deepEqual(result.state.futurePrestige.onTimeDailyDates, []);
 });
 
-test('on-time Daily advances current Mastery Daily requirement once', () => {
-  const profile = {
-    ...createDefaultProfile(),
-    mastery: { rank: 'expert' as const, stage: { anyWins: 0, mediumWins: 0, hardWins: 20, onTimeDailyWins: 2 } },
-  };
-  const first = settleDailyWin(profile, {
-    dailyDateKey: '2026-09-14', completionDateKey: '2026-09-14', moves: 50, activeMs: 400_000,
+test('hint-assisted Daily marks the record but still follows first-result/on-time policy', () => {
+  const base = createDefaultMetaSave();
+  const begun = beginDailyAttempt(base, '2026-09-14', { attemptId: 'daily-2026-09-14~1', rankingEligible: true });
+  const result = settleDailyWin(begun, {
+    dailyDateKey: '2026-09-14', completionDateKey: '2026-09-14', attemptId: 'daily-2026-09-14~1', moves: 44, activeMs: 390_000, assisted: true,
   });
-  assert.equal(first.profile.mastery.stage.onTimeDailyWins, 3);
-  const replay = settleDailyWin(first.profile, {
-    dailyDateKey: '2026-09-14', completionDateKey: '2026-09-14', moves: 49, activeMs: 390_000,
-  });
-  assert.equal(replay.profile.mastery.stage.onTimeDailyWins, 3);
-});
-
-test('Daily win can complete novice any-win requirement', () => {
-  const profile = {
-    ...createDefaultProfile(),
-    mastery: { rank: 'novice' as const, stage: { anyWins: 9, mediumWins: 0, hardWins: 0, onTimeDailyWins: 0 } },
-  };
-  const result = settleDailyWin(profile, {
-    dailyDateKey: '2026-09-14', completionDateKey: '2026-09-14', moves: 50, activeMs: 400_000,
-  });
-  assert.equal(result.rankAdvancedTo, 'player');
-  assert.equal(result.profile.mastery.rank, 'player');
+  const entry = result.state.daily.records['2026-09-14'];
+  assert.equal(entry?.hintUsed, true);
+  assert.deepEqual(entry?.officialResult, { moves: 44, activeMs: 390_000 });
+  assert.equal(entry?.completedOnTime, true);
 });
 
 test('attempt comparison is moves first and active time second', () => {

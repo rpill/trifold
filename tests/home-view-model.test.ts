@@ -1,112 +1,84 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createDefaultProfile } from '../src/meta/profile/ProfileSchema.ts';
+import { createDefaultMetaSave } from '../src/meta/MetaSave.ts';
+import type { TrifoldProductSnapshot } from '../src/ui/bridge/TrifoldProductBridge.ts';
 import { buildHomeViewModel } from '../src/ui/home/HomeViewModel.ts';
 
-function activeStandard() {
+function snapshot(overrides: Partial<TrifoldProductSnapshot> = {}): TrifoldProductSnapshot {
   return {
-    version: 1 as const,
-    seed: 21,
-    partition: 'medium' as const,
-    difficulty: 'medium' as const,
-    game: {
-      version: 1 as const,
-      seed: 21,
-      snapshot: {
-        seed: 21,
-        tableau: [[], [], [], [], [], [], [], []],
-        freeCells: [
-          { kind: 'dragons' as const, family: 'red' as const, cardIds: ['dragon-red-1', 'dragon-red-2', 'dragon-red-3', 'dragon-red-4'] },
-          { kind: 'dragons' as const, family: 'green' as const, cardIds: ['dragon-green-1', 'dragon-green-2', 'dragon-green-3', 'dragon-green-4'] },
-          { kind: 'dragons' as const, family: 'white' as const, cardIds: ['dragon-white-1', 'dragon-white-2', 'dragon-white-3', 'dragon-white-4'] },
-        ],
-        foundations: { coins: [], bamboo: [], characters: [] },
-        flowerFoundation: null,
-      },
-      history: { version: 1 as const, entries: [] },
-    },
-    moves: 12,
-    activeMs: 3456,
-    assisted: false,
-    updatedAtMs: 999,
+    state: createDefaultMetaSave(),
+    activeMode: null,
+    activeDifficulty: null,
+    currentDailyId: '2026-09-14',
+    activeDailyId: null,
+    leaderboardsEnabled: false,
+    ...overrides,
   };
 }
 
-test('Home primary action is Play with remembered difficulty when no save exists', () => {
-  const profile = { ...createDefaultProfile(), selectedStandardDifficulty: 'hard' as const };
-  const vm = buildHomeViewModel(profile);
+test('Home primary action is Play with remembered difficulty when no Standard save exists', () => {
+  const base = createDefaultMetaSave();
+  const vm = buildHomeViewModel(snapshot({ state: { ...base, standard: { ...base.standard, selectedDifficulty: 'hard' } } }));
   assert.equal(vm.primary.title, 'Играть');
   assert.equal(vm.primary.difficulty, 'hard');
   assert.match(vm.primary.subtitle, /Сложн/i);
 });
 
-test('Home primary action becomes Continue and shows saved attempt difficulty', () => {
-  const profile = { ...createDefaultProfile(), selectedStandardDifficulty: 'easy' as const, activeStandard: activeStandard() };
-  const vm = buildHomeViewModel(profile);
+test('Home primary action becomes Continue and shows active Standard difficulty', () => {
+  const base = createDefaultMetaSave();
+  const vm = buildHomeViewModel(snapshot({
+    state: { ...base, standard: { ...base.standard, selectedDifficulty: 'easy' } },
+    activeMode: 'standard', activeDifficulty: 'medium',
+  }));
   assert.equal(vm.primary.title, 'Продолжить');
   assert.equal(vm.primary.difficulty, 'medium');
+  assert.equal(vm.primary.hasActiveGame, true);
   assert.match(vm.primary.subtitle, /Средн/i);
 });
 
 test('Home exposes literal Mastery counters instead of generic XP', () => {
-  const profile = {
-    ...createDefaultProfile(),
-    mastery: {
-      rank: 'player' as const,
-      stage: { anyWins: 0, mediumWins: 4, hardWins: 1, onTimeDailyWins: 0 },
-    },
-    coins: 125,
-    ownedThemeIds: ['base', 'launch_01'] as const,
-  };
-  const vm = buildHomeViewModel(profile);
+  const base = createDefaultMetaSave();
+  const vm = buildHomeViewModel(snapshot({ state: {
+    ...base,
+    mastery: { rank: 'player', stage: { anyWins: 0, mediumWins: 4, hardWins: 1, onTimeDailyWins: 0 } },
+  } }));
   assert.equal(vm.mastery.rank, 'player');
   assert.match(vm.mastery.subtitle, /4 \/ 15/);
   assert.match(vm.mastery.subtitle, /1 \/ 3/);
-  assert.equal(vm.coins, 125);
-  assert.equal(vm.themes.owned, 2);
-  assert.equal(vm.themes.total, 7);
 });
 
-test('delivered Home destinations become live while future leaderboards remain disabled', () => {
-  const vm = buildHomeViewModel(createDefaultProfile());
-  assert.equal(vm.daily.enabled, true);
-  assert.equal(vm.themes.enabled, true);
-  assert.equal(vm.leaderboardsEnabled, false);
-});
-
-
-test('saved Standard exposes a separate new-deal action using the newly selected difficulty', () => {
-  const profile = { ...createDefaultProfile(), selectedStandardDifficulty: 'hard' as const, activeStandard: activeStandard() };
-  const vm = buildHomeViewModel(profile);
-  assert.equal(vm.primary.title, 'Продолжить');
-  assert.equal(vm.primary.difficulty, 'medium');
-  assert.equal(vm.newDeal.title, 'Новая раздача');
-  assert.equal(vm.newDeal.difficulty, 'hard');
-  assert.match(vm.newDeal.subtitle, /Сложн/i);
-});
-
-test('Home Daily card is live and preserves current streak before today is played', () => {
-  const base = createDefaultProfile();
-  const entry = (dateKey: string) => ({
-    dateKey, completed: true, completedOnTime: true,
-    officialResult: { moves: 40, activeMs: 300_000 }, personalBest: { moves: 40, activeMs: 300_000 },
-    firstCompletionRewardClaimed: true,
-  } as const);
-  const profile = {
-    ...base,
-    daily: { ...base.daily, history: { '2026-09-12': entry('2026-09-12'), '2026-09-13': entry('2026-09-13') } },
-  };
-  const vm = buildHomeViewModel(profile, '2026-09-14');
+test('Home Daily card uses MetaSave streak and active Daily identity', () => {
+  const base = createDefaultMetaSave();
+  const state = { ...base, daily: { ...base.daily, records: {
+    '2026-09-12': { completed: true, completedOnTime: true, attempts: 1 },
+    '2026-09-13': { completed: true, completedOnTime: true, attempts: 1 },
+  } } };
+  const vm = buildHomeViewModel(snapshot({ state, activeMode: 'daily', activeDailyId: '2026-09-14' }));
   assert.equal(vm.daily.enabled, true);
   assert.match(vm.daily.subtitle, /2/);
-  assert.match(vm.daily.subtitle, /сегодня/i);
+  assert.match(vm.daily.subtitle, /продолж/i);
 });
 
+test('Home Leaders remains a live product destination even when the SDK leaderboard is unavailable', () => {
+  const unavailable = buildHomeViewModel(snapshot());
+  const available = buildHomeViewModel(snapshot({ leaderboardsEnabled: true }));
+  assert.equal(unavailable.leaders.enabled, true);
+  assert.equal(available.leaders.enabled, true);
+  assert.notEqual(unavailable.leaders.subtitle, available.leaders.subtitle);
+});
 
-test('Home view model renders English copy when English is active', () => {
-  const vm = buildHomeViewModel({ ...createDefaultProfile(), selectedStandardDifficulty: 'hard' }, '2026-09-14', true, 'en');
+test('Home view model renders English copy from the same product snapshot', () => {
+  const base = createDefaultMetaSave();
+  const vm = buildHomeViewModel(snapshot({ state: { ...base, standard: { ...base.standard, selectedDifficulty: 'hard' } } }), 'en');
   assert.equal(vm.primary.title, 'Play');
   assert.equal(vm.newDeal.title, 'New deal');
   assert.match(vm.primary.subtitle, /Hard/);
   assert.match(vm.daily.subtitle, /Today/);
+});
+
+test('Home primary resumes an active Daily as the highest-priority unfinished game', () => {
+  const vm = buildHomeViewModel(snapshot({ activeMode: 'daily', activeDailyId: '2026-09-14' }));
+  assert.equal(vm.primary.hasActiveGame, true);
+  assert.equal(vm.primary.title, 'Продолжить');
+  assert.equal(vm.primary.subtitle, 'Daily');
 });

@@ -17,9 +17,8 @@ export interface HomeLayout {
   readonly newDealAction: UiRect;
   readonly daily: UiRect;
   readonly mastery: UiRect;
-  readonly themes: UiRect;
+  readonly leaders: UiRect;
   readonly serviceActions: UiRect;
-  readonly coinPill: UiRect;
 }
 
 function rect(x: number, y: number, width: number, height: number): UiRect {
@@ -27,6 +26,11 @@ function rect(x: number, y: number, width: number, height: number): UiRect {
 }
 
 export function computeHomeLayout(viewport: ResolvedUiViewport): HomeLayout {
+  const backing = viewport.minTouchTarget / 44;
+  if (backing !== 1) {
+    const logical = computeHomeLayout({ ...viewport, width: viewport.width / backing, height: viewport.height / backing, safeMargin: viewport.safeMargin / backing, uiScale: viewport.uiScale / backing, minTouchTarget: 44 });
+    return Object.fromEntries(Object.entries(logical).map(([key, r]) => [key, { x: r.x * backing, y: r.y * backing, width: r.width * backing, height: r.height * backing }])) as unknown as HomeLayout;
+  }
   const { width, height, safeMargin, profile } = viewport;
   const gap = profile === 'desktop'
     ? Math.max(24, Math.round(width * 0.016))
@@ -38,25 +42,23 @@ export function computeHomeLayout(viewport: ResolvedUiViewport): HomeLayout {
   const brandWidth = usableWidth * brandWeight / weightTotal;
   const dashboardWidth = usableWidth - brandWidth;
   const brand = rect(safeMargin, safeMargin, brandWidth, height - safeMargin * 2);
-  const dashboard = rect(brand.x + brand.width + gap, safeMargin, dashboardWidth, height - safeMargin * 2);
+  const dashboardHeight = profile === 'desktop' ? Math.min(height - safeMargin * 2, height * 0.80) : height - safeMargin * 2;
+  const dashboard = rect(brand.x + brand.width + gap, (height - dashboardHeight) / 2, dashboardWidth, dashboardHeight);
 
   const innerGap = profile === 'desktop'
     ? Math.max(16, Math.round(height * 0.018))
     : Math.max(8, Math.round(height * 0.014));
   const serviceHeight = Math.max(viewport.minTouchTarget, profile === 'desktop' ? 48 : 44);
-  const serviceWidth = Math.min(dashboard.width * 0.44, serviceHeight * 3 + innerGap * 2);
-  const coinWidth = Math.min(dashboard.width * 0.22, profile === 'desktop' ? 180 : 130);
+  const serviceWidth = Math.min(dashboard.width * 0.44, serviceHeight * 2 + innerGap);
   const serviceActions = rect(dashboard.x + dashboard.width - serviceWidth, dashboard.y, serviceWidth, serviceHeight);
-  const coinPill = rect(serviceActions.x - innerGap - coinWidth, dashboard.y, coinWidth, serviceHeight);
 
   const contentTop = dashboard.y + serviceHeight + innerGap;
   const contentBottom = dashboard.y + dashboard.height;
   const contentHeight = Math.max(1, contentBottom - contentTop);
-  const verticalGaps = innerGap * 2;
+  const verticalGaps = innerGap;
   const cardsHeight = Math.max(1, contentHeight - verticalGaps);
-  const continueHeight = cardsHeight * 0.38;
-  const pairHeight = cardsHeight * 0.31;
-  const themesHeight = cardsHeight - continueHeight - pairHeight;
+  const continueHeight = Math.max(cardsHeight * 0.54, viewport.minTouchTarget * 2 + 10);
+  const pairHeight = cardsHeight - continueHeight;
 
   const continueCard = rect(dashboard.x, contentTop, dashboard.width, continueHeight);
   const standardGap = Math.max(6, Math.min(innerGap, viewport.minTouchTarget * 0.22));
@@ -93,10 +95,10 @@ export function computeHomeLayout(viewport: ResolvedUiViewport): HomeLayout {
 
   const pairY = continueCard.y + continueCard.height + innerGap;
   const pairGap = innerGap;
-  const pairWidth = (dashboard.width - pairGap) / 2;
+  const pairWidth = (dashboard.width - pairGap * 2) / 3;
   const daily = rect(dashboard.x, pairY, pairWidth, pairHeight);
   const mastery = rect(daily.x + daily.width + pairGap, pairY, pairWidth, pairHeight);
-  const themes = rect(dashboard.x, pairY + pairHeight + innerGap, dashboard.width, themesHeight);
+  const leaders = rect(mastery.x + mastery.width + pairGap, pairY, pairWidth, pairHeight);
 
   return {
     brand,
@@ -108,8 +110,7 @@ export function computeHomeLayout(viewport: ResolvedUiViewport): HomeLayout {
     newDealAction,
     daily,
     mastery,
-    themes,
+    leaders,
     serviceActions,
-    coinPill,
   };
 }
